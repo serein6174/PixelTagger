@@ -1,0 +1,20 @@
+build/
+.vs/
+out/
+
+# Local Codex/agent context. Do not publish machine-local instructions or traces.
+.agents/
+.codex/
+
+# Local CMake/IDE settings.
+CMakeUserPresets.json
+.cache/
+
+# Visual Studio user files and databases.
+*.user
+*.suo
+*.VC.db
+*.VC.VC.opendb
+
+*.local.md
+
