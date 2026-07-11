@@ -36,3 +36,7 @@ target_include_directories(AnnotaVision PRIVATE
 target_link_libraries(AnnotaVision PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
 )
+
+if(MSVC)
+    target_compile_options(AnnotaVision PRIVATE /utf-8)
+endif()
