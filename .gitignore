@@ -2,7 +2,7 @@ build/
 .vs/
 out/
 
-# Local Codex/agent context. Do not publish machine-local instructions or traces.
+# Local assistant context. Do not publish machine-local instructions or traces.
 .agents/
 .codex/
 
@@ -17,4 +17,5 @@ CMakeUserPresets.json
 *.VC.VC.opendb
 
 *.local.md
+
 

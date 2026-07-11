@@ -2,8 +2,13 @@
 
 #include <QMainWindow>
 
-#include "view/ImageCanvas.h"
+#include "model/ProjectModel.h"
+#include "view/canvas/ImageCanvas.h"
+#include "viewmodel/AnnotationViewModel.h"
 #include "viewmodel/ImageViewModel.h"
+#include "viewmodel/LabelViewModel.h"
+
+class QComboBox;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -18,8 +23,13 @@ private slots:
 
 private:
     void createMenus();
+    void createToolBar();
     void connectViewModel();
 
+    ProjectModel projectModel_;
     ImageCanvas* canvas_ = nullptr;
-    ImageViewModel* imageViewModel_ = nullptr;
+    QComboBox* labelComboBox_ = nullptr;
+    ImageViewModel imageViewModel_;
+    AnnotationViewModel annotationViewModel_;
+    LabelViewModel labelViewModel_;
 };

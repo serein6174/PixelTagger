@@ -14,19 +14,26 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 add_executable(AnnotaVision
     src/main.cpp
 
-    src/common/ICommandBase.h
-    src/common/TupleCommand.h
-
+    src/model/AnnotationModel.h
     src/model/ImageModel.h
+    src/model/LabelModel.h
     src/model/ProjectModel.h
+    src/model/Types.h
 
-    src/view/ImageCanvas.h
-    src/view/ImageCanvas.cpp
+    src/view/canvas/CoordinateMapper.h
+    src/view/canvas/CoordinateMapper.cpp
+    src/view/canvas/ImageCanvas.h
+    src/view/canvas/ImageCanvas.cpp
     src/view/MainWindow.h
     src/view/MainWindow.cpp
 
+    src/viewmodel/AnnotationViewData.h
+    src/viewmodel/AnnotationViewModel.h
+    src/viewmodel/AnnotationViewModel.cpp
     src/viewmodel/ImageViewModel.h
     src/viewmodel/ImageViewModel.cpp
+    src/viewmodel/LabelViewModel.h
+    src/viewmodel/LabelViewModel.cpp
 )
 
 target_include_directories(AnnotaVision PRIVATE

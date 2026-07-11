@@ -12,7 +12,7 @@ class ImageViewModel : public QObject {
     Q_OBJECT
 
 public:
-    explicit ImageViewModel(QObject* parent = nullptr);
+    explicit ImageViewModel(ProjectModel& project);
 
     ICommandBase* loadImageCommand() const;
     ICommandBase* loadFolderCommand() const;
@@ -27,6 +27,7 @@ public:
 
 signals:
     void imageChanged(const QImage& image);
+    void currentImageChanged();
     void statusChanged(const QString& message);
     void errorOccurred(const QString& message);
 
@@ -38,7 +39,7 @@ private:
     bool loadCurrentImage();
     QString imagePositionText() const;
 
-    ProjectModel project_;
+    ProjectModel& project_;
     QImage currentImage_;
     std::unique_ptr<ICommandBase> loadImageCommand_;
     std::unique_ptr<ICommandBase> loadFolderCommand_;
