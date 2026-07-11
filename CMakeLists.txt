@@ -14,6 +14,9 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 add_executable(AnnotaVision
     src/main.cpp
 
+    src/common/ICommandBase.h
+    src/common/TupleCommand.h
+
     src/model/ImageModel.h
     src/model/ProjectModel.h
 

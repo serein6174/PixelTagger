@@ -10,7 +10,8 @@
 
 ```text
 MainWindow 菜单动作
-  -> ImageViewModel::loadImage() / loadFolder() / nextImage() / previousImage()
+  -> ICommandBase::execute(std::any)
+  -> ImageViewModel 私有业务方法
   -> ProjectModel / ImageModel 状态更新
   -> imageChanged / statusChanged 信号
   -> ImageCanvas 刷新显示

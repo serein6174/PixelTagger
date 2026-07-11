@@ -3,10 +3,54 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QStringList>
+#include <tuple>
+
+#include "common/TupleCommand.h"
 
 ImageViewModel::ImageViewModel(QObject* parent)
-    : QObject(parent)
+    : QObject(parent),
+      loadImageCommand_(std::make_unique<TupleCommand<QString>>(
+          [this](const std::tuple<QString>& parameters) {
+              loadImage(std::get<0>(parameters));
+          })),
+      loadFolderCommand_(std::make_unique<TupleCommand<QString>>(
+          [this](const std::tuple<QString>& parameters) {
+              loadFolder(std::get<0>(parameters));
+          })),
+      previousImageCommand_(std::make_unique<TupleCommand<>>(
+          [this](const std::tuple<>&) {
+              previousImage();
+          })),
+      nextImageCommand_(std::make_unique<TupleCommand<>>(
+          [this](const std::tuple<>&) {
+              nextImage();
+          }))
 {
+}
+
+ICommandBase* ImageViewModel::loadImageCommand() const
+{
+    return loadImageCommand_.get();
+}
+
+ICommandBase* ImageViewModel::loadFolderCommand() const
+{
+    return loadFolderCommand_.get();
+}
+
+ICommandBase* ImageViewModel::previousImageCommand() const
+{
+    return previousImageCommand_.get();
+}
+
+ICommandBase* ImageViewModel::nextImageCommand() const
+{
+    return nextImageCommand_.get();
+}
+
+ICommandBase* ImageViewModel::nextPageCommand() const
+{
+    return nextImageCommand();
 }
 
 void ImageViewModel::loadImage(const QString& path)

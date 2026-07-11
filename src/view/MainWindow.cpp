@@ -6,6 +6,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QStatusBar>
+#include <tuple>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent),
@@ -42,11 +43,15 @@ void MainWindow::createMenus()
 
     QAction* previousAction = navigateMenu->addAction(QStringLiteral("上一张"));
     previousAction->setShortcut(QKeySequence(QStringLiteral("Left")));
-    connect(previousAction, &QAction::triggered, imageViewModel_, &ImageViewModel::previousImage);
+    connect(previousAction, &QAction::triggered, this, [this]() {
+        imageViewModel_->previousImageCommand()->execute();
+    });
 
     QAction* nextAction = navigateMenu->addAction(QStringLiteral("下一张"));
     nextAction->setShortcut(QKeySequence(QStringLiteral("Right")));
-    connect(nextAction, &QAction::triggered, imageViewModel_, &ImageViewModel::nextImage);
+    connect(nextAction, &QAction::triggered, this, [this]() {
+        imageViewModel_->nextPageCommand()->execute();
+    });
 }
 
 void MainWindow::connectViewModel()
@@ -74,7 +79,7 @@ void MainWindow::openImage()
         return;
     }
 
-    imageViewModel_->loadImage(path);
+    imageViewModel_->loadImageCommand()->execute(std::make_tuple(path));
 }
 
 void MainWindow::openFolder()
@@ -88,7 +93,7 @@ void MainWindow::openFolder()
         return;
     }
 
-    imageViewModel_->loadFolder(path);
+    imageViewModel_->loadFolderCommand()->execute(std::make_tuple(path));
 }
 
 void MainWindow::showError(const QString& message)
