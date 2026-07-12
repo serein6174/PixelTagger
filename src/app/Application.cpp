@@ -4,8 +4,7 @@
 
 Application::Application()
     : projectModel_{},
-      imageImportService_{},
-      imageViewModel_(projectModel_, imageImportService_),
+      imageViewModel_(projectModel_),
       annotationViewModel_(projectModel_),
       labelViewModel_(projectModel_),
       mainWindow_{}

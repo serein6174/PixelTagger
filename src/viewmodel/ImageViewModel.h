@@ -2,16 +2,17 @@
 
 #include <QObject>
 #include <QImage>
+#include <QVector>
 
+#include "common/types/Result.h"
 #include "model/ImageModel.h"
 #include "model/ProjectModel.h"
-#include "service/ImageImportService.h"
 
 class ImageViewModel : public QObject {
     Q_OBJECT
 
 public:
-    ImageViewModel(ProjectModel& project, const ImageImportService& importService);
+    explicit ImageViewModel(ProjectModel& project);
 
     void loadImage(const QString& path);
     void loadFolder(const QString& folderPath);
@@ -28,10 +29,12 @@ signals:
     void errorOccurred(const QString& message);
 
 private:
+    Result<QVector<ImageModel>> importImage(const QString& path) const;
+    Result<QVector<ImageModel>> importFolder(const QString& folderPath) const;
+    Result<ImageModel> readImage(const QString& path, const QString& rootPath) const;
     bool loadCurrentImage();
     QString imagePositionText() const;
 
     ProjectModel& project_;
-    const ImageImportService& importService_;
     QImage currentImage_;
 };

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "model/ProjectModel.h"
-#include "service/ImageImportService.h"
 #include "view/MainWindow.h"
 #include "viewmodel/AnnotationViewModel.h"
 #include "viewmodel/ImageViewModel.h"
@@ -18,7 +17,6 @@ private:
     void bindViewModels();
 
     ProjectModel projectModel_;
-    ImageImportService imageImportService_;
     ImageViewModel imageViewModel_;
     AnnotationViewModel annotationViewModel_;
     LabelViewModel labelViewModel_;

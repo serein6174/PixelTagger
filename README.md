@@ -13,7 +13,7 @@
 ```text
 MainWindow 发出导入或切换请求
   -> ImageViewModel
-  -> ImageImportService（导入和目录扫描）
+  -> ImageViewModel 内部执行导入和目录扫描
   -> ProjectModel 受控接口更新状态
   -> imageChanged / currentImageChanged / statusChanged 信号
   -> ImageCanvas 刷新显示
@@ -39,7 +39,6 @@ ImageCanvas 鼠标拖拽
 - `ViewModel` 负责业务操作、状态变更、Model 更新和展示数据生成。
 - `Model` 是唯一真实业务数据源，通过受控接口维护 ID、关系和 dirty 状态。
 - `Common` 只保存实体 ID、Result 和展示 DTO 等稳定跨层契约。
-- `Service` 负责与 UI 状态无关的文件系统复合操作。
 - 标注框在 Model 中永远保存为原图坐标。
 - 当前阶段默认标签为 object，可在工具栏的可编辑类别框中重命名。
 - 新建标注自动绑定当前类别。
@@ -79,5 +78,4 @@ vcpkg install opencv:x64-windows nlohmann-json:x64-windows
 ```
 
 这个命令需要联网下载依赖，执行前应先确认。
-
 

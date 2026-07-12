@@ -27,9 +27,6 @@ add_executable(AnnotaVision
     src/model/ProjectModel.h
     src/model/ProjectModel.cpp
 
-    src/service/ImageImportService.h
-    src/service/ImageImportService.cpp
-
     src/view/canvas/CoordinateMapper.h
     src/view/canvas/CoordinateMapper.cpp
     src/view/canvas/ImageCanvas.h
