@@ -7,7 +7,8 @@ LabelViewModel::LabelViewModel(ProjectModel& project)
 
 QString LabelViewModel::currentLabelName() const
 {
-    return project_.labels.isEmpty() ? QStringLiteral("object") : project_.labels.front().name;
+    const LabelModel* label = project_.defaultLabel();
+    return label ? label->name : QStringLiteral("object");
 }
 
 void LabelViewModel::setCurrentLabelName(const QString& name)
@@ -19,16 +20,9 @@ void LabelViewModel::setCurrentLabelName(const QString& name)
         return;
     }
 
-    if (project_.labels.isEmpty()) {
-        project_.labels.push_back(LabelModel{});
-    }
-
-    if (project_.labels.front().name == normalizedName) {
+    if (!project_.renameDefaultLabel(normalizedName)) {
         return;
     }
-
-    project_.labels.front().name = normalizedName;
-    project_.modified = true;
 
     emit currentLabelNameChanged(normalizedName);
     emit labelsChanged();

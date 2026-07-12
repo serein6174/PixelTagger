@@ -1,76 +1,41 @@
 #pragma once
 
+#include <QRectF>
 #include <QVector>
 
 #include "model/ImageModel.h"
 #include "model/LabelModel.h"
 
-class ProjectModel {
+class ProjectModel final {
 public:
-    ProjectModel()
-    {
-        labels.push_back(LabelModel{});
-    }
+    ProjectModel();
 
-    QVector<ImageModel> images;
-    QVector<LabelModel> labels;
-    int currentIndex = -1;
-    bool modified = false;
-    ImageId nextImageId = 1;
-    AnnotationId nextAnnotationId = 1;
+    bool hasCurrentImage() const noexcept;
+    const ImageModel* currentImage() const noexcept;
+    ImageModel currentImageValue() const;
+    int currentImagePosition() const noexcept;
+    int imageCount() const noexcept;
 
-    bool hasCurrentImage() const
-    {
-        return currentIndex >= 0 && currentIndex < images.size();
-    }
+    void replaceWithSingleImage(ImageModel image);
+    void replaceImages(QVector<ImageModel> images);
+    bool moveNextImage();
+    bool movePreviousImage();
 
-    ImageModel* currentImage()
-    {
-        return hasCurrentImage() ? &images[currentIndex] : nullptr;
-    }
+    bool addAnnotationToCurrentImage(const QRectF& imageRect, LabelId labelId);
 
-    const ImageModel* currentImage() const
-    {
-        return hasCurrentImage() ? &images[currentIndex] : nullptr;
-    }
+    const LabelModel* defaultLabel() const noexcept;
+    const LabelModel* findLabel(LabelId labelId) const noexcept;
+    bool renameDefaultLabel(const QString& name);
 
-    ImageModel currentImageValue() const
-    {
-        return hasCurrentImage() ? images[currentIndex] : ImageModel{};
-    }
+    bool isModified() const noexcept;
 
-    void setSingleImage(const ImageModel& image)
-    {
-        images.clear();
-        images.push_back(image);
-        currentIndex = 0;
-        modified = false;
-    }
+private:
+    void assignImageIds(QVector<ImageModel>& images);
 
-    void setImages(const QVector<ImageModel>& imageList)
-    {
-        images = imageList;
-        currentIndex = images.isEmpty() ? -1 : 0;
-        modified = false;
-    }
-
-    bool moveNext()
-    {
-        if (currentIndex + 1 >= images.size()) {
-            return false;
-        }
-
-        ++currentIndex;
-        return true;
-    }
-
-    bool movePrevious()
-    {
-        if (currentIndex <= 0) {
-            return false;
-        }
-
-        --currentIndex;
-        return true;
-    }
+    QVector<ImageModel> images_;
+    QVector<LabelModel> labels_;
+    int currentIndex_ = -1;
+    bool modified_ = false;
+    ImageId nextImageId_ = 1;
+    AnnotationId nextAnnotationId_ = 1;
 };

@@ -97,7 +97,7 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent* event)
 
     if (imageRect.width() >= kMinimumAnnotationSize &&
         imageRect.height() >= kMinimumAnnotationSize) {
-        emit annotationCreated(imageRect);
+        emit annotationCreateRequested(imageRect);
     }
 
     update();

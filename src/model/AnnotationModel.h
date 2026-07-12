@@ -2,7 +2,7 @@
 
 #include <QRectF>
 
-#include "model/Types.h"
+#include "common/types/EntityIds.h"
 
 class AnnotationModel {
 public:

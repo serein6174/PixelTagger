@@ -4,7 +4,7 @@
 #include <QVector>
 
 #include "model/AnnotationModel.h"
-#include "model/Types.h"
+#include "common/types/EntityIds.h"
 
 class ImageModel {
 public:

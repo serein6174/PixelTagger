@@ -4,15 +4,17 @@
 
 ## 当前阶段
 
-当前已实现一个真实 MVVM 闭环：打开单张图片、打开图片文件夹、上一张 / 下一张切换、当前类别命名，以及矩形框标注的最小闭环。
+当前已实现一个严格分层的 MVVM 最小闭环：打开单张图片、打开图片文件夹、上一张 / 下一张切换、当前类别命名，以及矩形框标注。
+
+`Application` 是组合根，负责创建唯一 `ProjectModel`、基础服务、ViewModel 和 MainWindow，并建立绑定。MainWindow 只管理界面和窗口级交互，不持有 Model 或 ViewModel。
 
 图片浏览数据流：
 
 ```text
-MainWindow 菜单动作
-  -> ICommandBase::execute(std::any)
-  -> ImageViewModel 私有业务方法
-  -> ProjectModel / ImageModel 状态更新
+MainWindow 发出导入或切换请求
+  -> ImageViewModel
+  -> ImageImportService（导入和目录扫描）
+  -> ProjectModel 受控接口更新状态
   -> imageChanged / currentImageChanged / statusChanged 信号
   -> ImageCanvas 刷新显示
 ```
@@ -22,7 +24,7 @@ MainWindow 菜单动作
 ```text
 ImageCanvas 鼠标拖拽
   -> CoordinateMapper 转换为原图坐标 imageRect
-  -> annotationCreated(imageRect)
+  -> annotationCreateRequested(imageRect)
   -> AnnotationViewModel::createAnnotation(imageRect)
   -> ProjectModel.currentImage().annotations 更新
   -> annotationsChanged(AnnotationViewData)
@@ -33,8 +35,11 @@ ImageCanvas 鼠标拖拽
 约束：
 
 - `View` 只负责界面、菜单、绘制、鼠标交互和显示坐标转换。
+- `Application` 只负责对象生命周期和信号绑定，不执行业务逻辑。
 - `ViewModel` 负责业务操作、状态变更、Model 更新和展示数据生成。
-- `Model` 只保存数据，不依赖界面控件。
+- `Model` 是唯一真实业务数据源，通过受控接口维护 ID、关系和 dirty 状态。
+- `Common` 只保存实体 ID、Result 和展示 DTO 等稳定跨层契约。
+- `Service` 负责与 UI 状态无关的文件系统复合操作。
 - 标注框在 Model 中永远保存为原图坐标。
 - 当前阶段默认标签为 object，可在工具栏的可编辑类别框中重命名。
 - 新建标注自动绑定当前类别。

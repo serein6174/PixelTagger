@@ -4,7 +4,7 @@
 #include <QRectF>
 #include <QString>
 
-#include "model/Types.h"
+#include "common/types/EntityIds.h"
 
 struct AnnotationViewData {
     AnnotationId id = -1;

@@ -1,14 +1,13 @@
 #include <QApplication>
 
-#include "view/MainWindow.h"
+#include "app/Application.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    MainWindow window;
-    window.resize(1100, 720);
-    window.show();
+    Application application;
+    application.show();
 
     return app.exec();
 }

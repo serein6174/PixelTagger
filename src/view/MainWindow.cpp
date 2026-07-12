@@ -13,18 +13,20 @@
 #include <QToolBar>
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent),
-      canvas_(new ImageCanvas(this)),
-      imageViewModel_(projectModel_),
-      annotationViewModel_(projectModel_),
-      labelViewModel_(projectModel_)
+    : QMainWindow(parent), canvas_(new ImageCanvas(this))
 {
     setWindowTitle(QStringLiteral("AnnotaVision"));
     setCentralWidget(canvas_);
     createMenus();
     createToolBar();
-    connectViewModel();
+    connectView();
+
     statusBar()->showMessage(QStringLiteral("就绪"));
+}
+
+ImageCanvas& MainWindow::imageCanvas() noexcept
+{
+    return *canvas_;
 }
 
 void MainWindow::createMenus()
@@ -45,11 +47,13 @@ void MainWindow::createMenus()
     QMenu* navigateMenu = menuBar()->addMenu(QStringLiteral("浏览"));
     QAction* previousAction = navigateMenu->addAction(QStringLiteral("上一张"));
     previousAction->setShortcut(QKeySequence(QStringLiteral("Left")));
-    connect(previousAction, &QAction::triggered, &imageViewModel_, &ImageViewModel::previousImage);
+    connect(previousAction, &QAction::triggered,
+            this, &MainWindow::previousImageRequested);
 
     QAction* nextAction = navigateMenu->addAction(QStringLiteral("下一张"));
     nextAction->setShortcut(QKeySequence(QStringLiteral("Right")));
-    connect(nextAction, &QAction::triggered, &imageViewModel_, &ImageViewModel::nextImage);
+    connect(nextAction, &QAction::triggered,
+            this, &MainWindow::nextImageRequested);
 }
 
 void MainWindow::createToolBar()
@@ -61,66 +65,56 @@ void MainWindow::createToolBar()
     labelComboBox_ = new QComboBox(this);
     labelComboBox_->setEditable(true);
     labelComboBox_->setMinimumWidth(180);
-    labelComboBox_->addItem(labelViewModel_.currentLabelName());
-    labelComboBox_->setCurrentText(labelViewModel_.currentLabelName());
+    labelComboBox_->addItem(QStringLiteral("object"));
     toolBar->addWidget(labelComboBox_);
 }
 
-void MainWindow::connectViewModel()
+void MainWindow::connectView()
 {
-    connect(&imageViewModel_, &ImageViewModel::imageChanged,
-            canvas_, &ImageCanvas::setImage);
-    connect(&imageViewModel_, &ImageViewModel::currentImageChanged,
-            &annotationViewModel_, &AnnotationViewModel::onCurrentImageChanged);
-    connect(&imageViewModel_, &ImageViewModel::statusChanged,
-            this, [this](const QString& message) { statusBar()->showMessage(message); });
-    connect(&imageViewModel_, &ImageViewModel::errorOccurred,
-            this, &MainWindow::showError);
-
-    connect(canvas_, &ImageCanvas::annotationCreated,
-            &annotationViewModel_, &AnnotationViewModel::createAnnotation);
-    connect(&annotationViewModel_, &AnnotationViewModel::annotationsChanged,
-            canvas_, &ImageCanvas::setAnnotations);
-    connect(&annotationViewModel_, &AnnotationViewModel::errorOccurred,
-            this, &MainWindow::showError);
-
     connect(labelComboBox_, &QComboBox::activated, this, [this]() {
-        labelViewModel_.setCurrentLabelName(labelComboBox_->currentText());
+        emit labelNameChangeRequested(labelComboBox_->currentText());
     });
     connect(labelComboBox_->lineEdit(), &QLineEdit::editingFinished, this, [this]() {
-        labelViewModel_.setCurrentLabelName(labelComboBox_->currentText());
+        emit labelNameChangeRequested(labelComboBox_->currentText());
     });
-    connect(&labelViewModel_, &LabelViewModel::currentLabelNameChanged,
-            this, [this](const QString& name) {
-                QSignalBlocker blocker(labelComboBox_);
-                labelComboBox_->setCurrentText(name);
-            });
-    connect(&labelViewModel_, &LabelViewModel::labelsChanged,
-            &annotationViewModel_, &AnnotationViewModel::onLabelsChanged);
-    connect(&labelViewModel_, &LabelViewModel::errorOccurred,
-            this, &MainWindow::showError);
 }
 
 void MainWindow::openImage()
 {
     const QString path = QFileDialog::getOpenFileName(
-        this, QStringLiteral("打开图片"), QString(),
-        QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif)"));
+        this,
+        QStringLiteral("打开图片"),
+        QString(),
+        QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif)")
+    );
     if (!path.isEmpty()) {
-        imageViewModel_.loadImage(path);
+        emit importImageRequested(path);
     }
 }
 
 void MainWindow::openFolder()
 {
     const QString path = QFileDialog::getExistingDirectory(
-        this, QStringLiteral("打开图片文件夹"));
+        this,
+        QStringLiteral("打开图片文件夹")
+    );
     if (!path.isEmpty()) {
-        imageViewModel_.loadFolder(path);
+        emit importFolderRequested(path);
     }
+}
+
+void MainWindow::showStatus(const QString& message)
+{
+    statusBar()->showMessage(message);
 }
 
 void MainWindow::showError(const QString& message)
 {
     QMessageBox::warning(this, QStringLiteral("错误"), message);
+}
+
+void MainWindow::setCurrentLabelName(const QString& name)
+{
+    QSignalBlocker blocker(labelComboBox_);
+    labelComboBox_->setCurrentText(name);
 }

@@ -6,7 +6,7 @@
 #include <QWidget>
 
 #include "view/canvas/CoordinateMapper.h"
-#include "viewmodel/AnnotationViewData.h"
+#include "common/presentation/AnnotationViewData.h"
 
 class ImageCanvas : public QWidget {
     Q_OBJECT
@@ -19,7 +19,7 @@ public slots:
     void setAnnotations(const QVector<AnnotationViewData>& annotations);
 
 signals:
-    void annotationCreated(const QRectF& imageRect);
+    void annotationCreateRequested(const QRectF& imageRect);
 
 protected:
     void paintEvent(QPaintEvent* event) override;

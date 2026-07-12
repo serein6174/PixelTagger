@@ -1,71 +1,40 @@
 #include "viewmodel/ImageViewModel.h"
 
-#include <QDir>
-#include <QFileInfo>
-#include <QStringList>
-
-ImageViewModel::ImageViewModel(ProjectModel& project)
-    : project_(project)
+ImageViewModel::ImageViewModel(
+    ProjectModel& project,
+    const ImageImportService& importService
+)
+    : project_(project), importService_(importService)
 {
 }
 
 void ImageViewModel::loadImage(const QString& path)
 {
-    QImage image;
-    if (!image.load(path)) {
-        emit errorOccurred(QStringLiteral("无法打开图片：%1").arg(path));
+    Result<QVector<ImageModel>> result = importService_.importImage(path);
+    if (!result.isSuccess()) {
+        emit errorOccurred(result.error());
         return;
     }
-    QFileInfo info(path);
-    ImageModel model;
-    model.id = project_.nextImageId++;
-    model.filePath = info.absoluteFilePath();
-    model.fileName = info.fileName();
-    model.relativePath = info.fileName();
-    model.width = image.width();
-    model.height = image.height();
-    model.modified = false;
-    project_.setSingleImage(model);
-    currentImage_ = image;
-    emit imageChanged(currentImage_);
-    emit currentImageChanged();
-    emit statusChanged(QStringLiteral("%1  %2x%3  %4")
-                           .arg(model.fileName).arg(model.width).arg(model.height)
-                           .arg(imagePositionText()));
+
+    project_.replaceImages(result.takeValue());
+    loadCurrentImage();
 }
 
 void ImageViewModel::loadFolder(const QString& folderPath)
 {
-    QDir directory(folderPath);
-    const QStringList filters = {
-        QStringLiteral("*.png"), QStringLiteral("*.jpg"),
-        QStringLiteral("*.jpeg"), QStringLiteral("*.bmp"),
-        QStringLiteral("*.gif")
-    };
-    const QFileInfoList files = directory.entryInfoList(
-        filters, QDir::Files | QDir::Readable, QDir::Name | QDir::IgnoreCase);
-    if (files.isEmpty()) {
-        emit errorOccurred(QStringLiteral("文件夹中没有可打开的图片：%1").arg(folderPath));
+    Result<QVector<ImageModel>> result = importService_.importFolder(folderPath);
+    if (!result.isSuccess()) {
+        emit errorOccurred(result.error());
         return;
     }
-    QVector<ImageModel> imageList;
-    imageList.reserve(files.size());
-    for (const QFileInfo& file : files) {
-        ImageModel model;
-        model.id = project_.nextImageId++;
-        model.filePath = file.absoluteFilePath();
-        model.fileName = file.fileName();
-        model.relativePath = file.fileName();
-        model.modified = false;
-        imageList.push_back(model);
-    }
-    project_.setImages(imageList);
+
+    project_.replaceImages(result.takeValue());
     loadCurrentImage();
 }
 
 void ImageViewModel::nextImage()
 {
-    if (!project_.moveNext()) {
+    if (!project_.moveNextImage()) {
         emit statusChanged(QStringLiteral("已经是最后一张图片  %1").arg(imagePositionText()));
         return;
     }
@@ -74,7 +43,7 @@ void ImageViewModel::nextImage()
 
 void ImageViewModel::previousImage()
 {
-    if (!project_.movePrevious()) {
+    if (!project_.movePreviousImage()) {
         emit statusChanged(QStringLiteral("已经是第一张图片  %1").arg(imagePositionText()));
         return;
     }
@@ -103,9 +72,6 @@ bool ImageViewModel::loadCurrentImage()
         emit errorOccurred(QStringLiteral("无法打开图片：%1").arg(model.filePath));
         return false;
     }
-    model.width = image.width();
-    model.height = image.height();
-    project_.images[project_.currentIndex] = model;
     currentImage_ = image;
     emit imageChanged(currentImage_);
     emit currentImageChanged();
@@ -120,6 +86,8 @@ QString ImageViewModel::imagePositionText() const
     if (!project_.hasCurrentImage()) {
         return QStringLiteral("0/0");
     }
+
     return QStringLiteral("%1/%2")
-        .arg(project_.currentIndex + 1).arg(project_.images.size());
+        .arg(project_.currentImagePosition())
+        .arg(project_.imageCount());
 }

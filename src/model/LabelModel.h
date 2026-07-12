@@ -3,7 +3,7 @@
 #include <QColor>
 #include <QString>
 
-#include "model/Types.h"
+#include "common/types/EntityIds.h"
 
 class LabelModel {
 public:

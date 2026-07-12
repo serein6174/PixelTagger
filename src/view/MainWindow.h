@@ -2,34 +2,39 @@
 
 #include <QMainWindow>
 
-#include "model/ProjectModel.h"
 #include "view/canvas/ImageCanvas.h"
-#include "viewmodel/AnnotationViewModel.h"
-#include "viewmodel/ImageViewModel.h"
-#include "viewmodel/LabelViewModel.h"
 
 class QComboBox;
 
-class MainWindow : public QMainWindow {
+class MainWindow final : public QMainWindow {
     Q_OBJECT
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
 
+    ImageCanvas& imageCanvas() noexcept;
+
+signals:
+    void importImageRequested(const QString& path);
+    void importFolderRequested(const QString& path);
+    void previousImageRequested();
+    void nextImageRequested();
+    void labelNameChangeRequested(const QString& name);
+
+public slots:
+    void showStatus(const QString& message);
+    void showError(const QString& message);
+    void setCurrentLabelName(const QString& name);
+
 private slots:
     void openImage();
     void openFolder();
-    void showError(const QString& message);
 
 private:
     void createMenus();
     void createToolBar();
-    void connectViewModel();
+    void connectView();
 
-    ProjectModel projectModel_;
     ImageCanvas* canvas_ = nullptr;
     QComboBox* labelComboBox_ = nullptr;
-    ImageViewModel imageViewModel_;
-    AnnotationViewModel annotationViewModel_;
-    LabelViewModel labelViewModel_;
 };

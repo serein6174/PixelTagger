@@ -6,8 +6,8 @@
 #include <QVector>
 
 #include "model/ProjectModel.h"
-#include "model/Types.h"
-#include "viewmodel/AnnotationViewData.h"
+#include "common/presentation/AnnotationViewData.h"
+#include "common/types/EntityIds.h"
 
 class AnnotationViewModel : public QObject {
     Q_OBJECT

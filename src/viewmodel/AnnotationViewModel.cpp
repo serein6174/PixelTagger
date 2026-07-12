@@ -11,7 +11,7 @@ AnnotationViewModel::AnnotationViewModel(ProjectModel& project)
 
 void AnnotationViewModel::createAnnotation(const QRectF& imageRect)
 {
-    ImageModel* image = project_.currentImage();
+    const ImageModel* image = project_.currentImage();
     if (!image) {
         emit errorOccurred(QStringLiteral("当前没有可标注的图片"));
         return;
@@ -28,14 +28,10 @@ void AnnotationViewModel::createAnnotation(const QRectF& imageRect)
 
     const LabelModel label = defaultLabel();
 
-    AnnotationModel annotation;
-    annotation.id = project_.nextAnnotationId++;
-    annotation.labelId = label.id;
-    annotation.imageRect = boundedRect;
-
-    image->annotations.push_back(annotation);
-    image->modified = true;
-    project_.modified = true;
+    if (!project_.addAnnotationToCurrentImage(boundedRect, label.id)) {
+        emit errorOccurred(QStringLiteral("创建标注失败"));
+        return;
+    }
 
     publishAnnotations();
 }
@@ -61,15 +57,19 @@ void AnnotationViewModel::publishAnnotations()
         return;
     }
 
-    const LabelModel label = defaultLabel();
     items.reserve(image->annotations.size());
 
     for (const AnnotationModel& annotation : image->annotations) {
+        const LabelModel* label = project_.findLabel(annotation.labelId);
+        if (!label) {
+            continue;
+        }
+
         AnnotationViewData item;
         item.id = annotation.id;
         item.imageRect = annotation.imageRect;
-        item.labelName = label.name;
-        item.color = label.color;
+        item.labelName = label->name;
+        item.color = label->color;
         item.selected = selectedAnnotationId_.has_value() &&
                         selectedAnnotationId_.value() == annotation.id;
         items.push_back(item);
@@ -80,6 +80,7 @@ void AnnotationViewModel::publishAnnotations()
 
 LabelModel AnnotationViewModel::defaultLabel() const
 {
-    return project_.labels.isEmpty() ? LabelModel{} : project_.labels.front();
+    const LabelModel* label = project_.defaultLabel();
+    return label ? *label : LabelModel{};
 }
 
