@@ -6,14 +6,16 @@
 #include <QVector>
 
 #include "model/ProjectModel.h"
-#include "common/presentation/AnnotationViewData.h"
+#include "common/presentation/AnnotationRenderData.h"
 #include "common/types/EntityIds.h"
+#include "common/types/ViewModelChange.h"
 
 class AnnotationViewModel : public QObject {
     Q_OBJECT
 
 public:
     explicit AnnotationViewModel(ProjectModel& project);
+    QVector<AnnotationRenderData> annotationItems() const;
 
 public slots:
     void createAnnotation(const QRectF& imageRect);
@@ -21,7 +23,7 @@ public slots:
     void onLabelsChanged();
 
 signals:
-    void annotationsChanged(const QVector<AnnotationViewData>& annotations);
+    void changed(ViewModelChange change);
     void errorOccurred(const QString& message);
 
 private:

@@ -49,12 +49,16 @@ void AnnotationViewModel::onLabelsChanged()
 
 void AnnotationViewModel::publishAnnotations()
 {
-    QVector<AnnotationViewData> items;
+    emit changed(ViewModelChange::Annotations);
+}
+
+QVector<AnnotationRenderData> AnnotationViewModel::annotationItems() const
+{
+    QVector<AnnotationRenderData> items;
 
     const ImageModel* image = project_.currentImage();
     if (!image) {
-        emit annotationsChanged(items);
-        return;
+        return items;
     }
 
     items.reserve(image->annotations.size());
@@ -65,7 +69,7 @@ void AnnotationViewModel::publishAnnotations()
             continue;
         }
 
-        AnnotationViewData item;
+        AnnotationRenderData item;
         item.id = annotation.id;
         item.imageRect = annotation.imageRect;
         item.labelName = label->name;
@@ -75,7 +79,7 @@ void AnnotationViewModel::publishAnnotations()
         items.push_back(item);
     }
 
-    emit annotationsChanged(items);
+    return items;
 }
 
 LabelModel AnnotationViewModel::defaultLabel() const

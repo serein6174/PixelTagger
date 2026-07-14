@@ -58,7 +58,7 @@ ImageModel ImageViewModel::currentImage() const
     return project_.currentImageValue();
 }
 
-QImage ImageViewModel::currentQImage() const
+const QImage& ImageViewModel::currentQImage() const noexcept
 {
     return currentImage_;
 }
@@ -154,8 +154,7 @@ bool ImageViewModel::loadCurrentImage()
         return false;
     }
     currentImage_ = image;
-    emit imageChanged(currentImage_);
-    emit currentImageChanged();
+    emit changed(ViewModelChange::CurrentImage);
     emit statusChanged(QStringLiteral("%1  %2x%3  %4")
                            .arg(model.fileName).arg(model.width).arg(model.height)
                            .arg(imagePositionText()));

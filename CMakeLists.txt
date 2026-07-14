@@ -19,7 +19,8 @@ add_executable(AnnotaVision
 
     src/common/types/EntityIds.h
     src/common/types/Result.h
-    src/common/presentation/AnnotationViewData.h
+    src/common/types/ViewModelChange.h
+    src/common/presentation/AnnotationRenderData.h
 
     src/model/AnnotationModel.h
     src/model/ImageModel.h

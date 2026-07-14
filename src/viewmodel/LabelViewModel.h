@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 
+#include "common/types/ViewModelChange.h"
 #include "model/ProjectModel.h"
 
 class LabelViewModel : public QObject {
@@ -17,8 +18,7 @@ public slots:
     void setCurrentLabelName(const QString& name);
 
 signals:
-    void currentLabelNameChanged(const QString& name);
-    void labelsChanged();
+    void changed(ViewModelChange change);
     void errorOccurred(const QString& message);
 
 private:

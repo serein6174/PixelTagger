@@ -15,7 +15,8 @@ MainWindow 发出导入或切换请求
   -> ImageViewModel
   -> ImageViewModel 内部执行导入和目录扫描
   -> ProjectModel 受控接口更新状态
-  -> imageChanged / currentImageChanged / statusChanged 信号
+  -> changed(CurrentImage) / statusChanged 信号
+  -> Application 拉取 currentQImage()
   -> ImageCanvas 刷新显示
 ```
 
@@ -27,7 +28,8 @@ ImageCanvas 鼠标拖拽
   -> annotationCreateRequested(imageRect)
   -> AnnotationViewModel::createAnnotation(imageRect)
   -> ProjectModel.currentImage().annotations 更新
-  -> annotationsChanged(AnnotationViewData)
+  -> changed(Annotations)
+  -> Application 拉取 annotationItems()
   -> ImageCanvas::setAnnotations()
   -> update()
 ```
@@ -37,6 +39,7 @@ ImageCanvas 鼠标拖拽
 - `View` 只负责界面、菜单、绘制、鼠标交互和显示坐标转换。
 - `Application` 只负责对象生命周期和信号绑定，不执行业务逻辑。
 - `ViewModel` 负责业务操作、状态变更、Model 更新和展示数据生成。
+- 大数据变化使用 `changed(ViewModelChange)` 枚举通知，再由 Application 通过 getter 拉取展示数据。
 - `Model` 是唯一真实业务数据源，通过受控接口维护 ID、关系和 dirty 状态。
 - `Common` 只保存实体 ID、Result 和展示 DTO 等稳定跨层契约。
 - 标注框在 Model 中永远保存为原图坐标。

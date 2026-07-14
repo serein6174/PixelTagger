@@ -16,7 +16,7 @@ void LabelViewModel::setCurrentLabelName(const QString& name)
     const QString normalizedName = name.trimmed();
     if (normalizedName.isEmpty()) {
         emit errorOccurred(QStringLiteral("类别名称不能为空"));
-        emit currentLabelNameChanged(currentLabelName());
+        emit changed(ViewModelChange::CurrentLabel);
         return;
     }
 
@@ -24,6 +24,5 @@ void LabelViewModel::setCurrentLabelName(const QString& name)
         return;
     }
 
-    emit currentLabelNameChanged(normalizedName);
-    emit labelsChanged();
+    emit changed(ViewModelChange::CurrentLabel);
 }

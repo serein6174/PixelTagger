@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget* parent)
     createMenus();
     createToolBar();
     connectView();
+    canvas_->setFocus(Qt::OtherFocusReason);
 
     statusBar()->showMessage(QStringLiteral("就绪"));
 }
@@ -46,12 +47,20 @@ void MainWindow::createMenus()
 
     QMenu* navigateMenu = menuBar()->addMenu(QStringLiteral("浏览"));
     QAction* previousAction = navigateMenu->addAction(QStringLiteral("上一张"));
-    previousAction->setShortcut(QKeySequence(QStringLiteral("Left")));
+    previousAction->setShortcuts({
+        QKeySequence(QStringLiteral("PgUp")),
+        QKeySequence(QStringLiteral("Ctrl+Left"))
+    });
+    previousAction->setShortcutContext(Qt::WindowShortcut);
     connect(previousAction, &QAction::triggered,
             this, &MainWindow::previousImageRequested);
 
     QAction* nextAction = navigateMenu->addAction(QStringLiteral("下一张"));
-    nextAction->setShortcut(QKeySequence(QStringLiteral("Right")));
+    nextAction->setShortcuts({
+        QKeySequence(QStringLiteral("PgDown")),
+        QKeySequence(QStringLiteral("Ctrl+Right"))
+    });
+    nextAction->setShortcutContext(Qt::WindowShortcut);
     connect(nextAction, &QAction::triggered,
             this, &MainWindow::nextImageRequested);
 }
@@ -73,9 +82,11 @@ void MainWindow::connectView()
 {
     connect(labelComboBox_, &QComboBox::activated, this, [this]() {
         emit labelNameChangeRequested(labelComboBox_->currentText());
+        canvas_->setFocus(Qt::OtherFocusReason);
     });
     connect(labelComboBox_->lineEdit(), &QLineEdit::editingFinished, this, [this]() {
         emit labelNameChangeRequested(labelComboBox_->currentText());
+        canvas_->setFocus(Qt::OtherFocusReason);
     });
 }
 

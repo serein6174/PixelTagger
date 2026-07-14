@@ -14,6 +14,7 @@ ImageCanvas::ImageCanvas(QWidget* parent)
     setMinimumSize(640, 480);
     setAutoFillBackground(true);
     setMouseTracking(true);
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 void ImageCanvas::setImage(const QImage& image)
@@ -24,7 +25,7 @@ void ImageCanvas::setImage(const QImage& image)
     update();
 }
 
-void ImageCanvas::setAnnotations(const QVector<AnnotationViewData>& annotations)
+void ImageCanvas::setAnnotations(const QVector<AnnotationRenderData>& annotations)
 {
     annotations_ = annotations;
     update();
@@ -136,7 +137,7 @@ void ImageCanvas::drawAnnotations(QPainter& painter)
 {
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    for (const AnnotationViewData& annotation : annotations_) {
+    for (const AnnotationRenderData& annotation : annotations_) {
         const QRectF widgetRect = mapper_.imageToWidget(annotation.imageRect);
 
         QPen pen(annotation.color, annotation.selected ? 3.0 : 2.0);

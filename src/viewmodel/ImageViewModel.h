@@ -5,6 +5,7 @@
 #include <QVector>
 
 #include "common/types/Result.h"
+#include "common/types/ViewModelChange.h"
 #include "model/ImageModel.h"
 #include "model/ProjectModel.h"
 
@@ -20,11 +21,10 @@ public:
     void previousImage();
 
     ImageModel currentImage() const;
-    QImage currentQImage() const;
+    const QImage& currentQImage() const noexcept;
 
 signals:
-    void imageChanged(const QImage& image);
-    void currentImageChanged();
+    void changed(ViewModelChange change);
     void statusChanged(const QString& message);
     void errorOccurred(const QString& message);
 

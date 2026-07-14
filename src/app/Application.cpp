@@ -10,7 +10,6 @@ Application::Application()
       mainWindow_{}
 {
     bindView();
-    bindViewModels();
     mainWindow_.setCurrentLabelName(labelViewModel_.currentLabelName());
 }
 
@@ -38,26 +37,32 @@ void Application::bindView()
     QObject::connect(&canvas, &ImageCanvas::annotationCreateRequested,
                      &annotationViewModel_, &AnnotationViewModel::createAnnotation);
 
-    QObject::connect(&imageViewModel_, &ImageViewModel::imageChanged,
-                     &canvas, &ImageCanvas::setImage);
+    QObject::connect(&imageViewModel_, &ImageViewModel::changed,
+                     &mainWindow_, [this, &canvas](ViewModelChange change) {
+                         if (change == ViewModelChange::CurrentImage) {
+                             canvas.setImage(imageViewModel_.currentQImage());
+                             annotationViewModel_.onCurrentImageChanged();
+                         }
+                     });
     QObject::connect(&imageViewModel_, &ImageViewModel::statusChanged,
                      &mainWindow_, &MainWindow::showStatus);
     QObject::connect(&imageViewModel_, &ImageViewModel::errorOccurred,
                      &mainWindow_, &MainWindow::showError);
-    QObject::connect(&annotationViewModel_, &AnnotationViewModel::annotationsChanged,
-                     &canvas, &ImageCanvas::setAnnotations);
+    QObject::connect(&annotationViewModel_, &AnnotationViewModel::changed,
+                     &mainWindow_, [this, &canvas](ViewModelChange change) {
+                         if (change == ViewModelChange::Annotations) {
+                             canvas.setAnnotations(annotationViewModel_.annotationItems());
+                         }
+                     });
     QObject::connect(&annotationViewModel_, &AnnotationViewModel::errorOccurred,
                      &mainWindow_, &MainWindow::showError);
-    QObject::connect(&labelViewModel_, &LabelViewModel::currentLabelNameChanged,
-                     &mainWindow_, &MainWindow::setCurrentLabelName);
+    QObject::connect(&labelViewModel_, &LabelViewModel::changed,
+                     &mainWindow_, [this](ViewModelChange change) {
+                         if (change == ViewModelChange::CurrentLabel) {
+                             mainWindow_.setCurrentLabelName(labelViewModel_.currentLabelName());
+                             annotationViewModel_.onLabelsChanged();
+                         }
+                     });
     QObject::connect(&labelViewModel_, &LabelViewModel::errorOccurred,
                      &mainWindow_, &MainWindow::showError);
-}
-
-void Application::bindViewModels()
-{
-    QObject::connect(&imageViewModel_, &ImageViewModel::currentImageChanged,
-                     &annotationViewModel_, &AnnotationViewModel::onCurrentImageChanged);
-    QObject::connect(&labelViewModel_, &LabelViewModel::labelsChanged,
-                     &annotationViewModel_, &AnnotationViewModel::onLabelsChanged);
 }

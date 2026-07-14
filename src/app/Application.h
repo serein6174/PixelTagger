@@ -14,7 +14,6 @@ public:
 
 private:
     void bindView();
-    void bindViewModels();
 
     ProjectModel projectModel_;
     ImageViewModel imageViewModel_;
