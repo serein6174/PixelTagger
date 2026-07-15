@@ -42,6 +42,16 @@ void MainWindow::createMenus()
     connect(openFolderAction, &QAction::triggered, this, &MainWindow::openFolder);
 
     fileMenu->addSeparator();
+
+    QAction* openProjectAction = fileMenu->addAction(QStringLiteral("打开项目"));
+    connect(openProjectAction, &QAction::triggered, this, &MainWindow::openProject);
+
+    QAction* saveProjectAction = fileMenu->addAction(QStringLiteral("保存项目"));
+    saveProjectAction->setShortcut(QKeySequence::Save);
+    connect(saveProjectAction, &QAction::triggered, this, &MainWindow::saveProject);
+
+    fileMenu->addSeparator();
+
     QAction* exitAction = fileMenu->addAction(QStringLiteral("退出"));
     connect(exitAction, &QAction::triggered, this, &QWidget::close);
 
@@ -111,6 +121,32 @@ void MainWindow::openFolder()
     );
     if (!path.isEmpty()) {
         emit importFolderRequested(path);
+    }
+}
+
+void MainWindow::openProject()
+{
+    const QString path = QFileDialog::getOpenFileName(
+        this,
+        QStringLiteral("打开项目"),
+        QString(),
+        QStringLiteral("PixelTagger Project (*.json)")
+    );
+    if (!path.isEmpty()) {
+        emit openProjectRequested(path);
+    }
+}
+
+void MainWindow::saveProject()
+{
+    const QString path = QFileDialog::getSaveFileName(
+        this,
+        QStringLiteral("保存项目"),
+        QStringLiteral("project.json"),
+        QStringLiteral("PixelTagger Project (*.json)")
+    );
+    if (!path.isEmpty()) {
+        emit saveProjectRequested(path);
     }
 }
 

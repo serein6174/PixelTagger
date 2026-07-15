@@ -7,6 +7,7 @@ constexpr double kMinimumAnnotationSize = 3.0;
 AnnotationViewModel::AnnotationViewModel(ProjectModel& project)
     : project_(project)
 {
+    resetCurrentLabel();
 }
 
 void AnnotationViewModel::createAnnotation(const QRectF& imageRect)
@@ -26,9 +27,13 @@ void AnnotationViewModel::createAnnotation(const QRectF& imageRect)
         return;
     }
 
-    const LabelModel label = defaultLabel();
+    const LabelModel* label = project_.findLabel(currentLabelId_);
+    if (!label) {
+        emit errorOccurred(QStringLiteral("当前没有有效类别"));
+        return;
+    }
 
-    if (!project_.addAnnotationToCurrentImage(boundedRect, label.id)) {
+    if (!project_.addAnnotationToCurrentImage(boundedRect, label->id)) {
         emit errorOccurred(QStringLiteral("创建标注失败"));
         return;
     }
@@ -36,14 +41,37 @@ void AnnotationViewModel::createAnnotation(const QRectF& imageRect)
     publishAnnotations();
 }
 
-void AnnotationViewModel::onCurrentImageChanged()
+void AnnotationViewModel::onImageViewModelChanged(ViewModelChange change)
 {
+    if (change != ViewModelChange::CurrentImage) {
+        return;
+    }
     selectedAnnotationId_.reset();
     publishAnnotations();
 }
 
-void AnnotationViewModel::onLabelsChanged()
+LabelId AnnotationViewModel::currentLabelId() const noexcept
 {
+    return currentLabelId_;
+}
+
+void AnnotationViewModel::setCurrentLabelId(LabelId labelId)
+{
+    if (!project_.findLabel(labelId)) {
+        emit errorOccurred(QStringLiteral("选择的类别不存在"));
+        return;
+    }
+    currentLabelId_ = labelId;
+}
+
+void AnnotationViewModel::onLabelViewModelChanged(ViewModelChange change)
+{
+    if (change != ViewModelChange::CurrentLabel) {
+        return;
+    }
+    if (!project_.findLabel(currentLabelId_)) {
+        resetCurrentLabel();
+    }
     publishAnnotations();
 }
 
@@ -82,9 +110,9 @@ QVector<AnnotationRenderData> AnnotationViewModel::annotationItems() const
     return items;
 }
 
-LabelModel AnnotationViewModel::defaultLabel() const
+void AnnotationViewModel::resetCurrentLabel()
 {
     const LabelModel* label = project_.defaultLabel();
-    return label ? *label : LabelModel{};
+    currentLabelId_ = label ? label->id : -1;
 }
 

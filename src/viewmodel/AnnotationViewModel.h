@@ -16,11 +16,13 @@ class AnnotationViewModel : public QObject {
 public:
     explicit AnnotationViewModel(ProjectModel& project);
     QVector<AnnotationRenderData> annotationItems() const;
+    LabelId currentLabelId() const noexcept;
 
 public slots:
     void createAnnotation(const QRectF& imageRect);
-    void onCurrentImageChanged();
-    void onLabelsChanged();
+    void setCurrentLabelId(LabelId labelId);
+    void onImageViewModelChanged(ViewModelChange change);
+    void onLabelViewModelChanged(ViewModelChange change);
 
 signals:
     void changed(ViewModelChange change);
@@ -28,9 +30,10 @@ signals:
 
 private:
     void publishAnnotations();
-    LabelModel defaultLabel() const;
+    void resetCurrentLabel();
 
     ProjectModel& project_;
+    LabelId currentLabelId_ = -1;
     std::optional<AnnotationId> selectedAnnotationId_;
 };
 

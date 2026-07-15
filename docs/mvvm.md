@@ -37,7 +37,8 @@
 enum class ViewModelChange {
     CurrentImage,
     Annotations,
-    CurrentLabel
+    CurrentLabel,
+    Project
 };
 ```
 
@@ -64,7 +65,7 @@ MainWindow::openImage()
   -> ImageViewModel::changed(CurrentImage)
   -> Application 拉取 ImageViewModel::currentQImage()
   -> ImageCanvas::setImage(image)
-  -> AnnotationViewModel::onCurrentImageChanged()
+  -> AnnotationViewModel::onImageViewModelChanged(CurrentImage)
 ```
 
 创建矩形标注：
@@ -90,6 +91,21 @@ MainWindow 工具栏可编辑类别框
   -> LabelViewModel::changed(CurrentLabel)
   -> Application 拉取 LabelViewModel::currentLabelName()
   -> MainWindow::setCurrentLabelName(name)
-  -> AnnotationViewModel::onLabelsChanged()
+  -> AnnotationViewModel::onLabelViewModelChanged(CurrentLabel)
   -> AnnotationViewModel::changed(Annotations)
+```
+
+项目保存/读取：
+
+```text
+MainWindow 打开/保存项目菜单
+  -> openProjectRequested(path) / saveProjectRequested(path)
+  -> ProjectViewModel::openProject(path) / saveProject(path)
+  -> JsonProjectRepository::load(path) / save(project, path)
+  -> ProjectModel 替换或序列化项目数据
+  -> ProjectViewModel::changed(Project)
+  -> ImageViewModel::onProjectChanged(Project)
+  -> LabelViewModel::onProjectChanged(Project)
+  -> AnnotationViewModel 响应图片和类别变化并重新发布标注
+  -> Application 仅按绑定将各 ViewModel 的展示数据更新到 View
 ```

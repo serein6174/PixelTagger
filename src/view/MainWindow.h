@@ -17,6 +17,8 @@ public:
 signals:
     void importImageRequested(const QString& path);
     void importFolderRequested(const QString& path);
+    void openProjectRequested(const QString& path);
+    void saveProjectRequested(const QString& path);
     void previousImageRequested();
     void nextImageRequested();
     void labelNameChangeRequested(const QString& name);
@@ -29,6 +31,8 @@ public slots:
 private slots:
     void openImage();
     void openFolder();
+    void openProject();
+    void saveProject();
 
 private:
     void createMenus();

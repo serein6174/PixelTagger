@@ -3,5 +3,6 @@
 enum class ViewModelChange {
     CurrentImage,
     Annotations,
-    CurrentLabel
+    CurrentLabel,
+    Project
 };
