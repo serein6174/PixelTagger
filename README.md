@@ -64,10 +64,14 @@ MainWindow 发出打开或保存项目请求
 
 ## 环境
 
-- Visual Studio 2022 C++ 桌面开发工具集，或可用的 MSVC 编译环境。
-- CMake 3.20 或更高版本。
-- vcpkg。
-- Qt Widgets 开发包，建议安装与 MSVC 版本匹配的 64-bit Qt kit。
+当前已验证的 Windows 开发环境：
+
+- Visual Studio 2022 Build Tools，MSVC 19.42；
+- Windows SDK 10.0.22621.0；
+- CMake 3.20 或更高版本；
+- Qt 6.11.1，`msvc2022_64` kit；
+- OpenCV 4.12.0；
+- vcpkg，`x64-windows` triplet。
 
 请在本机设置环境变量：
 
@@ -77,8 +81,8 @@ MainWindow 发出打开或保存项目请求
 如果 Qt 不在 CMake 默认搜索路径中，配置时需要补充 `CMAKE_PREFIX_PATH`：
 
 ```powershell
-cmake --preset vs2022-x64 -DCMAKE_PREFIX_PATH=<QtPrefix>
-cmake --build --preset vs2022-x64
+cmake --preset default -DCMAKE_PREFIX_PATH=<QtPrefix>
+cmake --build --preset default --config Debug
 ```
 
 其中 `<QtPrefix>` 是包含 `lib/cmake/Qt6/Qt6Config.cmake` 的 Qt 安装前缀。
@@ -89,11 +93,25 @@ cmake --build --preset vs2022-x64
 windeployqt <path-to-build-output>/Debug/AnnotaVision.exe
 ```
 
-后续接入 OpenCV 和 nlohmann-json 时，再通过 vcpkg 安装：
+基础图像处理只需要 OpenCV Core 和 Imgproc。建议安装最小功能版本，
+避免引入 DNN、DirectML、FlatBuffers 等当前项目不使用的依赖：
 
 ```powershell
-vcpkg install opencv:x64-windows nlohmann-json:x64-windows
+& "$env:VCPKG_ROOT\vcpkg.exe" install "opencv4[core]:x64-windows"
 ```
 
-这个命令需要联网下载依赖，执行前应先确认。
+安装完成后确认版本：
+
+```powershell
+& "$env:VCPKG_ROOT\vcpkg.exe" list | Select-String opencv
+```
+
+当前验证版本为：
+
+```text
+opencv4:x64-windows  4.12.0
+```
+
+安装命令需要联网下载依赖。CMake preset 已通过 `VCPKG_ROOT` 使用
+vcpkg toolchain。
 

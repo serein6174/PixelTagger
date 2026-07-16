@@ -10,6 +10,7 @@ set(CMAKE_AUTORCC ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc)
 
 add_executable(AnnotaVision
     src/main.cpp
@@ -32,6 +33,11 @@ add_executable(AnnotaVision
     src/repository/JsonProjectRepository.h
     src/repository/JsonProjectRepository.cpp
 
+    src/processor/ImageConverter.h
+    src/processor/ImageConverter.cpp
+    src/processor/ImageProcessor.h
+    src/processor/ImageProcessor.cpp
+
     src/view/canvas/CoordinateMapper.h
     src/view/canvas/CoordinateMapper.cpp
     src/view/canvas/ImageCanvas.h
@@ -47,14 +53,18 @@ add_executable(AnnotaVision
     src/viewmodel/LabelViewModel.cpp
     src/viewmodel/ProjectViewModel.h
     src/viewmodel/ProjectViewModel.cpp
+    src/viewmodel/ProcessViewModel.h
+    src/viewmodel/ProcessViewModel.cpp
 )
 
 target_include_directories(AnnotaVision PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${OpenCV_INCLUDE_DIRS}
 )
 
 target_link_libraries(AnnotaVision PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
+    ${OpenCV_LIBS}
 )
 
 if(MSVC)
@@ -122,5 +132,51 @@ if(BUILD_TESTING)
     add_annotavision_test(
         AnnotationEditingTests
         tests/annotation/AnnotationEditingTests.cpp
+    )
+
+    function(add_image_processing_test target source)
+        add_executable(${target}
+            ${source}
+            ${ARGN}
+
+            src/common/types/Result.h
+            src/processor/ImageConverter.h
+            src/processor/ImageConverter.cpp
+            src/processor/ImageProcessor.h
+            src/processor/ImageProcessor.cpp
+        )
+
+        target_include_directories(${target} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${OpenCV_INCLUDE_DIRS}
+        )
+
+        target_link_libraries(${target} PRIVATE
+            Qt${QT_VERSION_MAJOR}::Widgets
+            Qt${QT_VERSION_MAJOR}::Test
+            ${OpenCV_LIBS}
+        )
+
+        if(MSVC)
+            target_compile_options(${target} PRIVATE /utf-8)
+        endif()
+
+        add_test(
+            NAME ${target}
+            COMMAND ${CMAKE_COMMAND} -E env
+                    "PATH=$<TARGET_FILE_DIR:Qt${QT_VERSION_MAJOR}::Core>;$<TARGET_FILE_DIR:opencv_core>;$ENV{PATH}"
+                    $<TARGET_FILE:${target}>
+        )
+    endfunction()
+
+    add_image_processing_test(
+        ImageProcessorTests
+        tests/processor/ImageProcessorTests.cpp
+    )
+    add_image_processing_test(
+        ProcessViewModelTests
+        tests/viewmodel/ProcessViewModelTests.cpp
+        src/viewmodel/ProcessViewModel.h
+        src/viewmodel/ProcessViewModel.cpp
     )
 endif()
