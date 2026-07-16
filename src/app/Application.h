@@ -16,6 +16,7 @@ public:
 
 private:
     void bindView();
+    void syncLabelsToView();
 
     ProjectModel projectModel_;
     JsonProjectRepository projectRepository_;

@@ -12,7 +12,7 @@ Application::Application()
       mainWindow_{}
 {
     bindView();
-    mainWindow_.setCurrentLabelName(labelViewModel_.currentLabelName());
+    syncLabelsToView();
 }
 
 void Application::show()
@@ -33,8 +33,16 @@ void Application::bindView()
                      &imageViewModel_, &ImageViewModel::previousImage);
     QObject::connect(&mainWindow_, &MainWindow::nextImageRequested,
                      &imageViewModel_, &ImageViewModel::nextImage);
-    QObject::connect(&mainWindow_, &MainWindow::labelNameChangeRequested,
-                     &labelViewModel_, &LabelViewModel::setCurrentLabelName);
+    QObject::connect(&mainWindow_, &MainWindow::addLabelRequested,
+                     &labelViewModel_, &LabelViewModel::addLabel);
+    QObject::connect(&mainWindow_, &MainWindow::removeLabelRequested,
+                     &labelViewModel_, &LabelViewModel::removeLabel);
+    QObject::connect(&mainWindow_, &MainWindow::renameLabelRequested,
+                     &labelViewModel_, &LabelViewModel::renameLabel);
+    QObject::connect(&mainWindow_, &MainWindow::labelColorChangeRequested,
+                     &labelViewModel_, &LabelViewModel::setLabelColor);
+    QObject::connect(&mainWindow_, &MainWindow::currentLabelChangeRequested,
+                     &labelViewModel_, &LabelViewModel::setCurrentLabel);
     QObject::connect(&mainWindow_, &MainWindow::openProjectRequested,
                      &projectViewModel_, &ProjectViewModel::openProject);
     QObject::connect(&mainWindow_, &MainWindow::saveProjectRequested,
@@ -63,12 +71,10 @@ void Application::bindView()
                      });
     QObject::connect(&annotationViewModel_, &AnnotationViewModel::errorOccurred,
                      &mainWindow_, &MainWindow::showError);
-    QObject::connect(&labelViewModel_, &LabelViewModel::changed,
-                     &mainWindow_, [this](ViewModelChange change) {
-                         if (change == ViewModelChange::CurrentLabel) {
-                             mainWindow_.setCurrentLabelName(labelViewModel_.currentLabelName());
-                         }
-                     });
+    QObject::connect(&labelViewModel_, &LabelViewModel::labelsChanged,
+                     &mainWindow_, [this]() { syncLabelsToView(); });
+    QObject::connect(&labelViewModel_, &LabelViewModel::currentLabelChanged,
+                     &annotationViewModel_, &AnnotationViewModel::setCurrentLabelId);
     QObject::connect(&labelViewModel_, &LabelViewModel::changed,
                      &annotationViewModel_, &AnnotationViewModel::onLabelViewModelChanged);
     QObject::connect(&labelViewModel_, &LabelViewModel::errorOccurred,
@@ -81,4 +87,9 @@ void Application::bindView()
                      &mainWindow_, &MainWindow::showStatus);
     QObject::connect(&projectViewModel_, &ProjectViewModel::errorOccurred,
                      &mainWindow_, &MainWindow::showError);
+}
+
+void Application::syncLabelsToView()
+{
+    mainWindow_.setLabels(labelViewModel_.labelItems());
 }

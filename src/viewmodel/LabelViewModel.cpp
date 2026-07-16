@@ -6,12 +6,12 @@ LabelViewModel::LabelViewModel(ProjectModel& project)
     resetCurrentLabel();
 }
 
-QVector<LabelItem> LabelViewModel::labelItems() const
+QVector<LabelViewData> LabelViewModel::labelItems() const
 {
-    QVector<LabelItem> items;
+    QVector<LabelViewData> items;
     items.reserve(project_.labels().size());
     for (const LabelModel& label : project_.labels()) {
-        LabelItem item;
+        LabelViewData item;
         item.id = label.id;
         item.name = label.name;
         item.color = label.color;

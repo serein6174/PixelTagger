@@ -21,6 +21,7 @@ add_executable(AnnotaVision
     src/common/types/Result.h
     src/common/types/ViewModelChange.h
     src/common/presentation/AnnotationRenderData.h
+    src/common/presentation/LabelViewData.h
 
     src/model/AnnotationModel.h
     src/model/ImageModel.h
@@ -72,6 +73,7 @@ if(BUILD_TESTING)
         src/common/types/Result.h
         src/common/types/ViewModelChange.h
         src/common/presentation/AnnotationRenderData.h
+        src/common/presentation/LabelViewData.h
 
         src/model/AnnotationModel.h
         src/model/ImageModel.h
@@ -98,12 +100,10 @@ if(BUILD_TESTING)
         target_compile_options(AnnotaVisionTests PRIVATE /utf-8)
     endif()
 
-    get_target_property(QT_QMAKE_EXECUTABLE Qt${QT_VERSION_MAJOR}::qmake IMPORTED_LOCATION)
-    get_filename_component(QT_RUNTIME_DIRECTORY "${QT_QMAKE_EXECUTABLE}" DIRECTORY)
     add_test(
         NAME ModelViewModelTests
         COMMAND ${CMAKE_COMMAND} -E env
-                "PATH=${QT_RUNTIME_DIRECTORY};$ENV{PATH}"
+                "PATH=$<TARGET_FILE_DIR:Qt${QT_VERSION_MAJOR}::Core>;$ENV{PATH}"
                 $<TARGET_FILE:AnnotaVisionTests>
     )
 endif()

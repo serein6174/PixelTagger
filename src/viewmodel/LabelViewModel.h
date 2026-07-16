@@ -5,17 +5,10 @@
 #include <QString>
 #include <QVector>
 
+#include "common/presentation/LabelViewData.h"
 #include "common/types/EntityIds.h"
 #include "common/types/ViewModelChange.h"
 #include "model/ProjectModel.h"
-
-struct LabelItem final {
-    LabelId id = -1;
-    QString name;
-    QColor color;
-    bool current = false;
-    bool inUse = false;
-};
 
 class LabelViewModel : public QObject {
     Q_OBJECT
@@ -23,7 +16,7 @@ class LabelViewModel : public QObject {
 public:
     explicit LabelViewModel(ProjectModel& project);
 
-    QVector<LabelItem> labelItems() const;
+    QVector<LabelViewData> labelItems() const;
     LabelId currentLabelId() const noexcept;
     QString currentLabelName() const;
 
