@@ -68,6 +68,7 @@ void LabelViewModel::renameLabel(LabelId labelId, const QString& name)
 {
     const Result<void> result = project_.renameLabel(labelId, name);
     if (!result.isSuccess()) {
+        emit labelsChanged();
         emit errorOccurred(result.error());
         return;
     }

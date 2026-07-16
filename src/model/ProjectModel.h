@@ -31,6 +31,18 @@ public:
     bool movePreviousImage();
 
     bool addAnnotationToCurrentImage(const QRectF& imageRect, LabelId labelId);
+    const AnnotationModel* findAnnotationInCurrentImage(
+        AnnotationId annotationId
+    ) const noexcept;
+    Result<void> removeAnnotationFromCurrentImage(AnnotationId annotationId);
+    Result<void> updateAnnotationRect(
+        AnnotationId annotationId,
+        const QRectF& imageRect
+    );
+    Result<void> changeAnnotationLabel(
+        AnnotationId annotationId,
+        LabelId labelId
+    );
 
     const LabelModel* defaultLabel() const noexcept;
     const LabelModel* findLabel(LabelId labelId) const noexcept;
@@ -45,6 +57,11 @@ public:
     void markSaved() noexcept;
 
 private:
+    AnnotationModel* findMutableAnnotationInCurrentImage(
+        AnnotationId annotationId
+    ) noexcept;
+    Result<void> validateAnnotationRect(const QRectF& imageRect) const;
+    void markCurrentImageModified();
     void assignImageIds(QVector<ImageModel>& images);
     void refreshNextIds();
 

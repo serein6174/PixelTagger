@@ -66,44 +66,61 @@ include(CTest)
 if(BUILD_TESTING)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
 
-    add_executable(AnnotaVisionTests
-        tests/ModelViewModelTests.cpp
+    function(add_annotavision_test target source)
+        add_executable(${target}
+            ${source}
+            tests/TestFixtures.h
 
-        src/common/types/EntityIds.h
-        src/common/types/Result.h
-        src/common/types/ViewModelChange.h
-        src/common/presentation/AnnotationRenderData.h
-        src/common/presentation/LabelViewData.h
+            src/common/types/EntityIds.h
+            src/common/types/Result.h
+            src/common/types/ViewModelChange.h
+            src/common/presentation/AnnotationRenderData.h
+            src/common/presentation/LabelViewData.h
 
-        src/model/AnnotationModel.h
-        src/model/ImageModel.h
-        src/model/LabelModel.h
-        src/model/ProjectModel.h
-        src/model/ProjectModel.cpp
+            src/model/AnnotationModel.h
+            src/model/ImageModel.h
+            src/model/LabelModel.h
+            src/model/ProjectModel.h
+            src/model/ProjectModel.cpp
 
-        src/viewmodel/AnnotationViewModel.h
-        src/viewmodel/AnnotationViewModel.cpp
-        src/viewmodel/LabelViewModel.h
-        src/viewmodel/LabelViewModel.cpp
+            src/viewmodel/AnnotationViewModel.h
+            src/viewmodel/AnnotationViewModel.cpp
+            src/viewmodel/LabelViewModel.h
+            src/viewmodel/LabelViewModel.cpp
+        )
+
+        target_include_directories(${target} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests
+        )
+
+        target_link_libraries(${target} PRIVATE
+            Qt${QT_VERSION_MAJOR}::Widgets
+            Qt${QT_VERSION_MAJOR}::Test
+        )
+
+        if(MSVC)
+            target_compile_options(${target} PRIVATE /utf-8)
+        endif()
+
+        add_test(
+            NAME ${target}
+            COMMAND ${CMAKE_COMMAND} -E env
+                    "PATH=$<TARGET_FILE_DIR:Qt${QT_VERSION_MAJOR}::Core>;$ENV{PATH}"
+                    $<TARGET_FILE:${target}>
+        )
+    endfunction()
+
+    add_annotavision_test(
+        ProjectModelLabelTests
+        tests/model/ProjectModelLabelTests.cpp
     )
-
-    target_include_directories(AnnotaVisionTests PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    add_annotavision_test(
+        MultiLabelViewModelTests
+        tests/viewmodel/MultiLabelViewModelTests.cpp
     )
-
-    target_link_libraries(AnnotaVisionTests PRIVATE
-        Qt${QT_VERSION_MAJOR}::Widgets
-        Qt${QT_VERSION_MAJOR}::Test
-    )
-
-    if(MSVC)
-        target_compile_options(AnnotaVisionTests PRIVATE /utf-8)
-    endif()
-
-    add_test(
-        NAME ModelViewModelTests
-        COMMAND ${CMAKE_COMMAND} -E env
-                "PATH=$<TARGET_FILE_DIR:Qt${QT_VERSION_MAJOR}::Core>;$ENV{PATH}"
-                $<TARGET_FILE:AnnotaVisionTests>
+    add_annotavision_test(
+        AnnotationEditingTests
+        tests/annotation/AnnotationEditingTests.cpp
     )
 endif()

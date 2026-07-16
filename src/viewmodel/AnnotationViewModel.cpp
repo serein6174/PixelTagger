@@ -41,18 +41,116 @@ void AnnotationViewModel::createAnnotation(const QRectF& imageRect)
     publishAnnotations();
 }
 
+void AnnotationViewModel::selectAnnotation(AnnotationId annotationId)
+{
+    if (!project_.findAnnotationInCurrentImage(annotationId)) {
+        emit errorOccurred(QStringLiteral("选择的标注不存在"));
+        return;
+    }
+    if (selectedAnnotationId_ == annotationId) {
+        return;
+    }
+
+    selectedAnnotationId_ = annotationId;
+    emit selectionChanged(true);
+    publishAnnotations();
+}
+
+void AnnotationViewModel::clearSelection()
+{
+    if (!selectedAnnotationId_.has_value()) {
+        return;
+    }
+
+    selectedAnnotationId_.reset();
+    emit selectionChanged(false);
+    publishAnnotations();
+}
+
+void AnnotationViewModel::deleteSelectedAnnotation()
+{
+    if (!selectedAnnotationId_.has_value()) {
+        emit errorOccurred(QStringLiteral("请先选择一个标注"));
+        return;
+    }
+
+    const Result<void> result = project_.removeAnnotationFromCurrentImage(
+        selectedAnnotationId_.value()
+    );
+    if (!result.isSuccess()) {
+        emit errorOccurred(result.error());
+        return;
+    }
+
+    selectedAnnotationId_.reset();
+    emit selectionChanged(false);
+    publishAnnotations();
+}
+
+void AnnotationViewModel::updateSelectedAnnotationRect(const QRectF& imageRect)
+{
+    if (!selectedAnnotationId_.has_value()) {
+        emit errorOccurred(QStringLiteral("请先选择一个标注"));
+        return;
+    }
+
+    const QRectF normalizedRect = imageRect.normalized();
+    if (normalizedRect.width() < kMinimumAnnotationSize ||
+        normalizedRect.height() < kMinimumAnnotationSize) {
+        emit errorOccurred(QStringLiteral("标注框不能小于 3 x 3 原图像素"));
+        return;
+    }
+
+    const Result<void> result = project_.updateAnnotationRect(
+        selectedAnnotationId_.value(),
+        normalizedRect
+    );
+    if (!result.isSuccess()) {
+        emit errorOccurred(result.error());
+        return;
+    }
+    publishAnnotations();
+}
+
+void AnnotationViewModel::setSelectedAnnotationLabel(LabelId labelId)
+{
+    if (!selectedAnnotationId_.has_value()) {
+        emit errorOccurred(QStringLiteral("请先选择一个标注"));
+        return;
+    }
+
+    const Result<void> result = project_.changeAnnotationLabel(
+        selectedAnnotationId_.value(),
+        labelId
+    );
+    if (!result.isSuccess()) {
+        emit errorOccurred(result.error());
+        return;
+    }
+    publishAnnotations();
+}
+
 void AnnotationViewModel::onImageViewModelChanged(ViewModelChange change)
 {
     if (change != ViewModelChange::CurrentImage) {
         return;
     }
+    const bool hadSelection = selectedAnnotationId_.has_value();
     selectedAnnotationId_.reset();
+    if (hadSelection) {
+        emit selectionChanged(false);
+    }
     publishAnnotations();
 }
 
 LabelId AnnotationViewModel::currentLabelId() const noexcept
 {
     return currentLabelId_;
+}
+
+std::optional<AnnotationId> AnnotationViewModel::selectedAnnotationId() const noexcept
+{
+    return selectedAnnotationId_;
 }
 
 void AnnotationViewModel::setCurrentLabelId(LabelId labelId)

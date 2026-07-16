@@ -154,7 +154,7 @@ bool ProjectModel::addAnnotationToCurrentImage(
     LabelId labelId
 )
 {
-    if (!hasCurrentImage() || !findLabel(labelId)) {
+    if (!findLabel(labelId) || !validateAnnotationRect(imageRect).isSuccess()) {
         return false;
     }
 
@@ -163,11 +163,95 @@ bool ProjectModel::addAnnotationToCurrentImage(
     annotation.labelId = labelId;
     annotation.imageRect = imageRect;
 
-    ImageModel& image = images_[currentIndex_];
-    image.annotations.push_back(annotation);
-    image.modified = true;
-    modified_ = true;
+    images_[currentIndex_].annotations.push_back(annotation);
+    markCurrentImageModified();
     return true;
+}
+
+const AnnotationModel* ProjectModel::findAnnotationInCurrentImage(
+    AnnotationId annotationId
+) const noexcept
+{
+    const ImageModel* image = currentImage();
+    if (!image) {
+        return nullptr;
+    }
+
+    for (const AnnotationModel& annotation : image->annotations) {
+        if (annotation.id == annotationId) {
+            return &annotation;
+        }
+    }
+    return nullptr;
+}
+
+Result<void> ProjectModel::removeAnnotationFromCurrentImage(
+    AnnotationId annotationId
+)
+{
+    if (!hasCurrentImage()) {
+        return Result<void>::failure(QStringLiteral("当前没有可编辑的图片"));
+    }
+
+    QVector<AnnotationModel>& annotations = images_[currentIndex_].annotations;
+    const auto iterator = std::find_if(
+        annotations.begin(), annotations.end(),
+        [annotationId](const AnnotationModel& annotation) {
+            return annotation.id == annotationId;
+        }
+    );
+    if (iterator == annotations.end()) {
+        return Result<void>::failure(QStringLiteral("标注不存在"));
+    }
+
+    annotations.erase(iterator);
+    markCurrentImageModified();
+    return Result<void>::success();
+}
+
+Result<void> ProjectModel::updateAnnotationRect(
+    AnnotationId annotationId,
+    const QRectF& imageRect
+)
+{
+    const Result<void> validation = validateAnnotationRect(imageRect);
+    if (!validation.isSuccess()) {
+        return validation;
+    }
+
+    AnnotationModel* annotation = findMutableAnnotationInCurrentImage(annotationId);
+    if (!annotation) {
+        return Result<void>::failure(QStringLiteral("标注不存在"));
+    }
+    if (annotation->imageRect == imageRect) {
+        return Result<void>::success();
+    }
+
+    annotation->imageRect = imageRect;
+    markCurrentImageModified();
+    return Result<void>::success();
+}
+
+Result<void> ProjectModel::changeAnnotationLabel(
+    AnnotationId annotationId,
+    LabelId labelId
+)
+{
+    if (!findLabel(labelId)) {
+        return Result<void>::failure(QStringLiteral("目标类别不存在"));
+    }
+
+    AnnotationModel* annotation = findMutableAnnotationInCurrentImage(annotationId);
+    if (!annotation) {
+        return Result<void>::failure(QStringLiteral("标注不存在"));
+    }
+    if (annotation->labelId == labelId) {
+        return Result<void>::success();
+    }
+
+    annotation->labelId = labelId;
+    markCurrentImageModified();
+    return Result<void>::success();
 }
 
 const LabelModel* ProjectModel::defaultLabel() const noexcept
@@ -302,6 +386,50 @@ bool ProjectModel::renameDefaultLabel(const QString& name)
 bool ProjectModel::isModified() const noexcept
 {
     return modified_;
+}
+
+AnnotationModel* ProjectModel::findMutableAnnotationInCurrentImage(
+    AnnotationId annotationId
+) noexcept
+{
+    if (!hasCurrentImage()) {
+        return nullptr;
+    }
+
+    for (AnnotationModel& annotation : images_[currentIndex_].annotations) {
+        if (annotation.id == annotationId) {
+            return &annotation;
+        }
+    }
+    return nullptr;
+}
+
+Result<void> ProjectModel::validateAnnotationRect(const QRectF& imageRect) const
+{
+    const ImageModel* image = currentImage();
+    if (!image) {
+        return Result<void>::failure(QStringLiteral("当前没有可编辑的图片"));
+    }
+
+    const bool finite = std::isfinite(imageRect.x()) &&
+                        std::isfinite(imageRect.y()) &&
+                        std::isfinite(imageRect.width()) &&
+                        std::isfinite(imageRect.height());
+    const QRectF imageBounds(0.0, 0.0, image->width, image->height);
+    if (!finite || imageRect != imageRect.normalized() ||
+        imageRect.width() <= 0.0 || imageRect.height() <= 0.0 ||
+        !imageBounds.contains(imageRect)) {
+        return Result<void>::failure(QStringLiteral("标注矩形无效或超出图片范围"));
+    }
+    return Result<void>::success();
+}
+
+void ProjectModel::markCurrentImageModified()
+{
+    if (hasCurrentImage()) {
+        images_[currentIndex_].modified = true;
+        modified_ = true;
+    }
 }
 
 void ProjectModel::markSaved() noexcept

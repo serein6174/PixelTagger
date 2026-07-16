@@ -150,8 +150,8 @@ void MainWindow::connectView()
     });
     connect(labelComboBox_->lineEdit(), &QLineEdit::editingFinished, this, [this]() {
         const QString name = labelComboBox_->currentText().trimmed();
+        emit renameLabelRequested(currentComboLabelId(), name);
         if (!name.isEmpty()) {
-            emit renameLabelRequested(currentComboLabelId(), name);
             emit labelNameChangeRequested(name);
         }
         canvas_->setFocus(Qt::OtherFocusReason);
