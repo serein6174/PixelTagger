@@ -20,6 +20,8 @@ public slots:
 
 signals:
     void annotationCreateRequested(const QRectF& imageRect);
+    void annotationSelectRequested(AnnotationId annotationId);
+    void annotationSelectionClearRequested();
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -31,6 +33,7 @@ protected:
 private:
     QRectF imageViewportRect() const;
     void updateMapper();
+    AnnotationId annotationAt(const QPointF& widgetPoint) const;
     void drawAnnotations(QPainter& painter);
     void drawPreview(QPainter& painter);
 

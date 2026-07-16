@@ -65,6 +65,15 @@ void ImageCanvas::mousePressEvent(QMouseEvent* event)
         return;
     }
 
+    const AnnotationId hitAnnotationId = annotationAt(event->position());
+    if (hitAnnotationId >= 0) {
+        drawingAnnotation_ = false;
+        emit annotationSelectRequested(hitAnnotationId);
+        update();
+        return;
+    }
+
+    emit annotationSelectionClearRequested();
     drawingAnnotation_ = true;
     dragStartImagePoint_ = mapper_.widgetToImage(event->position());
     dragCurrentImagePoint_ = dragStartImagePoint_;
@@ -131,6 +140,16 @@ void ImageCanvas::updateMapper()
 {
     mapper_.setImageSize(image_.isNull() ? QSizeF{} : QSizeF(image_.size()));
     mapper_.setViewportRect(imageViewportRect());
+}
+
+AnnotationId ImageCanvas::annotationAt(const QPointF& widgetPoint) const
+{
+    for (auto it = annotations_.crbegin(); it != annotations_.crend(); ++it) {
+        if (mapper_.imageToWidget(it->imageRect).contains(widgetPoint)) {
+            return it->id;
+        }
+    }
+    return -1;
 }
 
 void ImageCanvas::drawAnnotations(QPainter& painter)

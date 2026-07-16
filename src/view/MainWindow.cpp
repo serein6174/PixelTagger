@@ -3,7 +3,10 @@
 #include <QAction>
 #include <QColorDialog>
 #include <QComboBox>
+#include <QDockWidget>
+#include <QDoubleSpinBox>
 #include <QFileDialog>
+#include <QFormLayout>
 #include <QIcon>
 #include <QInputDialog>
 #include <QKeySequence>
@@ -13,15 +16,31 @@
 #include <QMessageBox>
 #include <QPainter>
 #include <QPixmap>
+#include <QPushButton>
 #include <QSignalBlocker>
+#include <QSpinBox>
 #include <QStatusBar>
 #include <QStyle>
+#include <QStackedWidget>
 #include <QToolBar>
+#include <QToolButton>
+#include <QVBoxLayout>
 #include <QVariant>
 
 namespace {
 
 constexpr int kColorIconSize = 14;
+
+enum ProcessOperation {
+    GrayscaleOperation = 0,
+    BinaryOperation,
+    MeanBlurOperation,
+    GaussianBlurOperation,
+    MedianBlurOperation,
+    CannyOperation,
+    BrightnessOperation,
+    ContrastOperation
+};
 
 QIcon makeColorIcon(const QColor& color)
 {
@@ -49,6 +68,7 @@ MainWindow::MainWindow(QWidget* parent)
     setCentralWidget(canvas_);
     createMenus();
     createToolBar();
+    createProcessDock();
     connectView();
     canvas_->setFocus(Qt::OtherFocusReason);
 
@@ -79,6 +99,11 @@ void MainWindow::createMenus()
     QAction* saveProjectAction = fileMenu->addAction(QStringLiteral("保存项目"));
     saveProjectAction->setShortcut(QKeySequence::Save);
     connect(saveProjectAction, &QAction::triggered, this, &MainWindow::saveProject);
+
+    fileMenu->addSeparator();
+
+    QAction* exportYoloAction = fileMenu->addAction(QStringLiteral("导出 YOLO 数据集..."));
+    connect(exportYoloAction, &QAction::triggered, this, &MainWindow::exportYolo);
 
     fileMenu->addSeparator();
 
@@ -139,11 +164,128 @@ void MainWindow::createToolBar()
         this,
         &MainWindow::changeCurrentLabelColor
     );
+
+    toolBar->addSeparator();
+    applyLabelToAnnotationAction_ = toolBar->addAction(
+        style()->standardIcon(QStyle::SP_DialogApplyButton),
+        QStringLiteral("应用当前类别到选中标注")
+    );
+    applyLabelToAnnotationAction_->setEnabled(false);
+    connect(
+        applyLabelToAnnotationAction_,
+        &QAction::triggered,
+        this,
+        &MainWindow::applyCurrentLabelToSelectedAnnotation
+    );
+}
+
+void MainWindow::createProcessDock()
+{
+    QDockWidget* dock = new QDockWidget(QStringLiteral("图像处理"), this);
+    dock->setObjectName(QStringLiteral("ProcessDock"));
+    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+
+    QWidget* panel = new QWidget(dock);
+    QVBoxLayout* layout = new QVBoxLayout(panel);
+
+    processComboBox_ = new QComboBox(panel);
+    processComboBox_->addItem(QStringLiteral("灰度化"));
+    processComboBox_->addItem(QStringLiteral("二值化"));
+    processComboBox_->addItem(QStringLiteral("均值滤波"));
+    processComboBox_->addItem(QStringLiteral("高斯滤波"));
+    processComboBox_->addItem(QStringLiteral("中值滤波"));
+    processComboBox_->addItem(QStringLiteral("Canny 边缘检测"));
+    processComboBox_->addItem(QStringLiteral("亮度调整"));
+    processComboBox_->addItem(QStringLiteral("对比度调整"));
+    layout->addWidget(processComboBox_);
+
+    processParameterStack_ = new QStackedWidget(panel);
+    processParameterStack_->addWidget(new QWidget(processParameterStack_));
+
+    QWidget* binaryPage = new QWidget(processParameterStack_);
+    QFormLayout* binaryLayout = new QFormLayout(binaryPage);
+    binaryThresholdSpinBox_ = new QSpinBox(binaryPage);
+    binaryThresholdSpinBox_->setRange(0, 255);
+    binaryThresholdSpinBox_->setValue(128);
+    binaryLayout->addRow(QStringLiteral("阈值"), binaryThresholdSpinBox_);
+    processParameterStack_->addWidget(binaryPage);
+
+    auto createKernelPage = [this](QComboBox** comboBox) {
+        QWidget* page = new QWidget(processParameterStack_);
+        QFormLayout* form = new QFormLayout(page);
+        *comboBox = new QComboBox(page);
+        for (int kernelSize = 3; kernelSize <= 15; kernelSize += 2) {
+            (*comboBox)->addItem(QString::number(kernelSize), kernelSize);
+        }
+        form->addRow(QStringLiteral("核大小"), *comboBox);
+        return page;
+    };
+    processParameterStack_->addWidget(createKernelPage(&meanKernelComboBox_));
+    processParameterStack_->addWidget(createKernelPage(&gaussianKernelComboBox_));
+    processParameterStack_->addWidget(createKernelPage(&medianKernelComboBox_));
+
+    QWidget* cannyPage = new QWidget(processParameterStack_);
+    QFormLayout* cannyLayout = new QFormLayout(cannyPage);
+    cannyLowSpinBox_ = new QSpinBox(cannyPage);
+    cannyLowSpinBox_->setRange(0, 254);
+    cannyLowSpinBox_->setValue(50);
+    cannyHighSpinBox_ = new QSpinBox(cannyPage);
+    cannyHighSpinBox_->setRange(1, 255);
+    cannyHighSpinBox_->setValue(150);
+    cannyLayout->addRow(QStringLiteral("低阈值"), cannyLowSpinBox_);
+    cannyLayout->addRow(QStringLiteral("高阈值"), cannyHighSpinBox_);
+    processParameterStack_->addWidget(cannyPage);
+
+    QWidget* brightnessPage = new QWidget(processParameterStack_);
+    QFormLayout* brightnessLayout = new QFormLayout(brightnessPage);
+    brightnessSpinBox_ = new QSpinBox(brightnessPage);
+    brightnessSpinBox_->setRange(-100, 100);
+    brightnessSpinBox_->setValue(0);
+    brightnessLayout->addRow(QStringLiteral("亮度"), brightnessSpinBox_);
+    processParameterStack_->addWidget(brightnessPage);
+
+    QWidget* contrastPage = new QWidget(processParameterStack_);
+    QFormLayout* contrastLayout = new QFormLayout(contrastPage);
+    contrastSpinBox_ = new QDoubleSpinBox(contrastPage);
+    contrastSpinBox_->setRange(0.1, 3.0);
+    contrastSpinBox_->setDecimals(1);
+    contrastSpinBox_->setSingleStep(0.1);
+    contrastSpinBox_->setValue(1.0);
+    contrastLayout->addRow(QStringLiteral("对比度"), contrastSpinBox_);
+    processParameterStack_->addWidget(contrastPage);
+
+    layout->addWidget(processParameterStack_);
+
+    QPushButton* applyButton = new QPushButton(QStringLiteral("应用预览"), panel);
+    connect(applyButton, &QPushButton::clicked, this, &MainWindow::applyProcessPreview);
+    layout->addWidget(applyButton);
+
+    resetProcessPreviewAction_ = new QAction(QStringLiteral("恢复原图"), this);
+    resetProcessPreviewAction_->setEnabled(false);
+    connect(resetProcessPreviewAction_, &QAction::triggered,
+            this, &MainWindow::processPreviewResetRequested);
+    QToolButton* resetButton = new QToolButton(panel);
+    resetButton->setDefaultAction(resetProcessPreviewAction_);
+    resetButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    layout->addWidget(resetButton);
+
+    saveProcessPreviewAction_ = new QAction(QStringLiteral("另存处理结果"), this);
+    saveProcessPreviewAction_->setEnabled(false);
+    connect(saveProcessPreviewAction_, &QAction::triggered,
+            this, &MainWindow::saveProcessPreview);
+    QToolButton* saveButton = new QToolButton(panel);
+    saveButton->setDefaultAction(saveProcessPreviewAction_);
+    saveButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    layout->addWidget(saveButton);
+
+    layout->addStretch(1);
+    dock->setWidget(panel);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
 }
 
 void MainWindow::connectView()
 {
-    connect(labelComboBox_, &QComboBox::activated, this, [this](int index) {
+    connect(labelComboBox_, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
         const LabelId labelId = labelComboBox_->itemData(index).toInt();
         emit currentLabelChangeRequested(labelId);
         canvas_->setFocus(Qt::OtherFocusReason);
@@ -155,6 +297,15 @@ void MainWindow::connectView()
             emit labelNameChangeRequested(name);
         }
         canvas_->setFocus(Qt::OtherFocusReason);
+    });
+
+    connect(processComboBox_, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            processParameterStack_, &QStackedWidget::setCurrentIndex);
+    connect(cannyLowSpinBox_, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
+        cannyHighSpinBox_->setMinimum(value + 1);
+    });
+    connect(cannyHighSpinBox_, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
+        cannyLowSpinBox_->setMaximum(value - 1);
     });
 }
 
@@ -208,6 +359,17 @@ void MainWindow::saveProject()
     }
 }
 
+void MainWindow::exportYolo()
+{
+    const QString outputDirectory = QFileDialog::getExistingDirectory(
+        this,
+        QStringLiteral("选择 YOLO 数据集导出目录")
+    );
+    if (!outputDirectory.isEmpty()) {
+        emit exportYoloRequested(outputDirectory);
+    }
+}
+
 void MainWindow::showStatus(const QString& message)
 {
     statusBar()->showMessage(message);
@@ -257,6 +419,28 @@ void MainWindow::setLabels(const QVector<LabelViewData>& labels)
         changeLabelColorAction_->setEnabled(hasLabel);
         changeLabelColorAction_->setIcon(makeColorIcon(currentComboLabelColor()));
     }
+    if (applyLabelToAnnotationAction_) {
+        applyLabelToAnnotationAction_->setEnabled(annotationEditEnabled_ && hasLabel);
+    }
+}
+
+void MainWindow::setAnnotationEditEnabled(bool enabled)
+{
+    annotationEditEnabled_ = enabled;
+    if (applyLabelToAnnotationAction_) {
+        applyLabelToAnnotationAction_->setEnabled(enabled && labelComboBox_ &&
+                                                  labelComboBox_->count() > 0);
+    }
+}
+
+void MainWindow::setProcessPreviewActionsEnabled(bool enabled)
+{
+    if (resetProcessPreviewAction_) {
+        resetProcessPreviewAction_->setEnabled(enabled);
+    }
+    if (saveProcessPreviewAction_) {
+        saveProcessPreviewAction_->setEnabled(enabled);
+    }
 }
 
 void MainWindow::addLabel()
@@ -305,6 +489,59 @@ void MainWindow::changeCurrentLabelColor()
     canvas_->setFocus(Qt::OtherFocusReason);
 }
 
+void MainWindow::applyCurrentLabelToSelectedAnnotation()
+{
+    emit selectedAnnotationLabelChangeRequested(currentComboLabelId());
+    canvas_->setFocus(Qt::OtherFocusReason);
+}
+
+void MainWindow::applyProcessPreview()
+{
+    switch (processComboBox_->currentIndex()) {
+    case GrayscaleOperation:
+        emit grayscaleRequested();
+        break;
+    case BinaryOperation:
+        emit binaryRequested(binaryThresholdSpinBox_->value());
+        break;
+    case MeanBlurOperation:
+        emit meanBlurRequested(currentKernelSize(meanKernelComboBox_));
+        break;
+    case GaussianBlurOperation:
+        emit gaussianBlurRequested(currentKernelSize(gaussianKernelComboBox_));
+        break;
+    case MedianBlurOperation:
+        emit medianBlurRequested(currentKernelSize(medianKernelComboBox_));
+        break;
+    case CannyOperation:
+        emit cannyRequested(cannyLowSpinBox_->value(), cannyHighSpinBox_->value());
+        break;
+    case BrightnessOperation:
+        emit brightnessRequested(brightnessSpinBox_->value());
+        break;
+    case ContrastOperation:
+        emit contrastRequested(contrastSpinBox_->value());
+        break;
+    default:
+        break;
+    }
+    canvas_->setFocus(Qt::OtherFocusReason);
+}
+
+void MainWindow::saveProcessPreview()
+{
+    const QString path = QFileDialog::getSaveFileName(
+        this,
+        QStringLiteral("保存处理结果"),
+        QStringLiteral("processed.png"),
+        QStringLiteral("PNG (*.png);;JPEG (*.jpg *.jpeg);;BMP (*.bmp)")
+    );
+    if (!path.isEmpty()) {
+        emit processPreviewSaveRequested(path);
+    }
+    canvas_->setFocus(Qt::OtherFocusReason);
+}
+
 LabelId MainWindow::currentComboLabelId() const noexcept
 {
     return labelComboBox_ ? labelComboBox_->currentData().toInt() : -1;
@@ -324,4 +561,9 @@ QColor MainWindow::currentComboLabelColor() const
         }
     }
     return QColor(220, 70, 70);
+}
+
+int MainWindow::currentKernelSize(QComboBox* comboBox) const noexcept
+{
+    return comboBox ? comboBox->currentData().toInt() : 3;
 }
