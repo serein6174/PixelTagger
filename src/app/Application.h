@@ -1,5 +1,6 @@
 #pragma once
 
+#include "exporter/YoloExporter.h"
 #include "model/ProjectModel.h"
 #include "repository/JsonProjectRepository.h"
 #include "view/MainWindow.h"
@@ -20,6 +21,7 @@ private:
 
     ProjectModel projectModel_;
     JsonProjectRepository projectRepository_;
+    YoloExporter yoloExporter_;
     ImageViewModel imageViewModel_;
     AnnotationViewModel annotationViewModel_;
     LabelViewModel labelViewModel_;

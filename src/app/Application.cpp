@@ -5,10 +5,11 @@
 Application::Application()
     : projectModel_{},
       projectRepository_{},
+      yoloExporter_{},
       imageViewModel_(projectModel_),
       annotationViewModel_(projectModel_),
       labelViewModel_(projectModel_),
-      projectViewModel_(projectModel_, projectRepository_),
+      projectViewModel_(projectModel_, projectRepository_, yoloExporter_),
       mainWindow_{}
 {
     bindView();

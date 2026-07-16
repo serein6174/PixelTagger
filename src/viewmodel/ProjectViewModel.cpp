@@ -2,10 +2,29 @@
 
 ProjectViewModel::ProjectViewModel(
     ProjectModel& project,
-    JsonProjectRepository& repository
+    JsonProjectRepository& repository,
+    YoloExporter& yoloExporter
 )
-    : project_(project), repository_(repository)
+    : project_(project),
+      repository_(repository),
+      yoloExporter_(yoloExporter)
 {
+}
+
+void ProjectViewModel::exportYolo(const QString& outputDirectory)
+{
+    const Result<void> result = yoloExporter_.exportDataset(
+        project_,
+        outputDirectory
+    );
+    if (!result.isSuccess()) {
+        emit errorOccurred(result.error());
+        return;
+    }
+
+    emit statusChanged(
+        QStringLiteral("YOLO 数据集已导出：%1").arg(outputDirectory)
+    );
 }
 
 void ProjectViewModel::saveProject(const QString& path)

@@ -33,6 +33,9 @@ add_executable(AnnotaVision
     src/repository/JsonProjectRepository.h
     src/repository/JsonProjectRepository.cpp
 
+    src/exporter/YoloExporter.h
+    src/exporter/YoloExporter.cpp
+
     src/processor/ImageConverter.h
     src/processor/ImageConverter.cpp
     src/processor/ImageProcessor.h
@@ -178,5 +181,58 @@ if(BUILD_TESTING)
         tests/viewmodel/ProcessViewModelTests.cpp
         src/viewmodel/ProcessViewModel.h
         src/viewmodel/ProcessViewModel.cpp
+    )
+
+    function(add_yolo_export_test target source)
+        add_executable(${target}
+            ${source}
+            ${ARGN}
+
+            src/common/types/EntityIds.h
+            src/common/types/Result.h
+            src/common/types/ViewModelChange.h
+
+            src/model/AnnotationModel.h
+            src/model/ImageModel.h
+            src/model/LabelModel.h
+            src/model/ProjectModel.h
+            src/model/ProjectModel.cpp
+
+            src/exporter/YoloExporter.h
+            src/exporter/YoloExporter.cpp
+        )
+
+        target_include_directories(${target} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+        )
+
+        target_link_libraries(${target} PRIVATE
+            Qt${QT_VERSION_MAJOR}::Widgets
+            Qt${QT_VERSION_MAJOR}::Test
+        )
+
+        if(MSVC)
+            target_compile_options(${target} PRIVATE /utf-8)
+        endif()
+
+        add_test(
+            NAME ${target}
+            COMMAND ${CMAKE_COMMAND} -E env
+                    "PATH=$<TARGET_FILE_DIR:Qt${QT_VERSION_MAJOR}::Core>;$ENV{PATH}"
+                    $<TARGET_FILE:${target}>
+        )
+    endfunction()
+
+    add_yolo_export_test(
+        YoloExporterTests
+        tests/exporter/YoloExporterTests.cpp
+    )
+    add_yolo_export_test(
+        ProjectExportViewModelTests
+        tests/viewmodel/ProjectExportViewModelTests.cpp
+        src/repository/JsonProjectRepository.h
+        src/repository/JsonProjectRepository.cpp
+        src/viewmodel/ProjectViewModel.h
+        src/viewmodel/ProjectViewModel.cpp
     )
 endif()
