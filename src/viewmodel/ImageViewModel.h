@@ -19,6 +19,7 @@ public:
     void loadFolder(const QString& folderPath);
     void nextImage();
     void previousImage();
+    void onProjectChanged(ViewModelChange change);
 
     ImageModel currentImage() const;
     const QImage& currentQImage() const noexcept;

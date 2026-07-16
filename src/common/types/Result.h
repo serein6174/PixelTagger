@@ -52,3 +52,36 @@ private:
     std::optional<T> value_;
     QString error_;
 };
+
+template<>
+class Result<void> final {
+public:
+    static Result success()
+    {
+        return Result(true, QString{});
+    }
+
+    static Result failure(QString error)
+    {
+        return Result(false, std::move(error));
+    }
+
+    bool isSuccess() const noexcept
+    {
+        return success_;
+    }
+
+    const QString& error() const noexcept
+    {
+        return error_;
+    }
+
+private:
+    Result(bool success, QString error)
+        : success_(success), error_(std::move(error))
+    {
+    }
+
+    bool success_ = false;
+    QString error_;
+};

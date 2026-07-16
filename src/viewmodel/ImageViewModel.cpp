@@ -53,6 +53,23 @@ void ImageViewModel::previousImage()
     loadCurrentImage();
 }
 
+void ImageViewModel::onProjectChanged(ViewModelChange change)
+{
+    if (change != ViewModelChange::Project) {
+        return;
+    }
+
+    currentImage_ = QImage{};
+    if (!project_.hasCurrentImage()) {
+        emit changed(ViewModelChange::CurrentImage);
+        return;
+    }
+
+    if (!loadCurrentImage()) {
+        emit changed(ViewModelChange::CurrentImage);
+    }
+}
+
 ImageModel ImageViewModel::currentImage() const
 {
     return project_.currentImageValue();
