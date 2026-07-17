@@ -1,0 +1,397 @@
+# PixelTagger（AnnotaVision）项目成果与学习总结
+## 摘要
+
+PixelTagger是面向图像浏览、矩形框标注和基础图像处理场景的 Windows 桌面程序。项目以 C++17、Qt Widgets 和 CMake 为基础，通过 Model、ViewModel、View 以及负责对象装配和信号绑定的 `Application` 组合根划分职责。当前源码涉及图片导入、文件夹浏览、缩放平移、矩形标注、多类别管理、标注选择与编辑、JSON 项目保存/读取、OpenCV 处理预览和 YOLO 数据集导出等代码路径；这些功能仍需结合真实运行截图和人工验收确认。Qt signal/slot 用于传递用户请求、状态变化和错误反馈，Model 作为项目数据的业务状态来源。
+
+## 1. 项目概述
+
+### 1.1 项目背景
+
+图像数据进入训练、检索或质量分析流程前，通常需要完成浏览、筛选、类别定义和空间标注。桌面工具可以直接利用本地文件系统和鼠标交互，减少手工记录坐标的成本，并让标注状态、项目文件和导出结果形成可复核的数据链。PixelTagger 以课程工程实践为载体，在有限规模内探索 Qt GUI、C++ 对象设计、MVVM 分层、持久化和协作开发的组合方式。
+
+### 1.2 项目目标
+
+当前阶段目标是：导入单图或图片文件夹；浏览并显示图片状态；提供缩放、平移及矩形框创建、选择、移动、调整大小和删除；管理多个类别；保存/读取 JSON 项目；预览并另存基础 OpenCV 处理结果；导出 YOLO 数据集；通过 CMake 统一构建并为核心逻辑配置 Qt Test。
+
+完整项目的远期目标是形成更成熟的标注工作台，包括多边形或画笔工具、撤销/重做、自动保存、更多导入导出格式、大数据量异步加载、部署与持续集成。
+
+### 1.3 项目功能与代码位置
+
+| 功能模块        | 相关位置                                                           | 代码说明                                                               |
+| --------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| 工程配置        | `CMakeLists.txt`、`CMakePresets.json`                              | 声明 C++17、`AnnotaVision`、Qt Widgets、OpenCV、CTest 与 VS 预设       |
+| 打开单张图片    | `MainWindow.cpp`、`ImageViewModel.cpp`                             | 文件对话框发出请求，支持 PNG/JPG/JPEG/BMP/GIF                          |
+| 打开图片文件夹  | `ImageViewModel::importFolder`                                     | 非递归、按名称扫描可读图片；遇到不可读文件则整次导入失败               |
+| 上一张/下一张   | `MainWindow::createMenus`、`ImageViewModel`、`ProjectModel`        | 菜单及 PgUp/PgDown、Ctrl+Left/Ctrl+Right；首尾给出状态提示             |
+| 状态栏反馈      | `ImageViewModel::loadCurrentImage`、`MainWindow::showStatus`       | 显示文件名、分辨率和当前位置/总数                                      |
+| 异常提示        | 各 ViewModel、`Application::bindFeedback`、`MainWindow::showError` | 业务错误经 `errorOccurred` 显示警告框                                  |
+| 矩形图像标注    | `ImageCanvas`、`AnnotationViewModel`、`ProjectModel`               | 原图坐标保存；支持创建、选择、移动、四角调整和删除；无多边形/画笔      |
+| 类别管理        | `LabelViewModel`、`MainWindow`                                     | 新增、删除、重命名、改色、切换和修改标注类别                           |
+| 项目保存/读取   | `JsonProjectRepository`、`ProjectViewModel`                        | 使用 Qt JSON API；图片路径按项目文件位置解析，不使用 nlohmann-json     |
+| YOLO 导出       | `YoloExporter`、`ProjectViewModel::exportYolo`                     | 输出图片、标签、`classes.txt`、`data.yaml`；CTest 中该测试目标本轮异常 |
+| OpenCV 图像处理 | `ImageProcessor`、`ProcessViewModel`、处理停靠面板                 | 灰度、二值、三类滤波、Canny、亮度、对比度预览和另存                    |
+
+## 2 使用流程
+
+1. 构建并启动 `AnnotaVision.exe`，检查空画布和“就绪”状态。
+2. 使用“文件 → 打开图片”选择 PNG、JPG、JPEG、BMP 或 GIF。
+3. 或使用“打开图片文件夹”加载目录中按名称排序的图片。
+4. 使用“浏览”菜单、PgUp/PgDown 或 Ctrl+Left/Ctrl+Right 切换图片。
+5. 从状态栏查看文件名、分辨率和“当前位置/总数”。
+6. 在画布空白处左键拖拽创建矩形框；选择框后可移动、调整、改类别或删除。
+7. 可保存 JSON 项目、预览图像处理结果或选择空目录导出 YOLO 数据集。
+8. 遇到空目录、无效图片或业务错误时查看弹窗；首尾导航提示显示在状态栏。
+
+## 3. 系统总体设计
+
+### 3.1 技术栈
+
+| 技术                | 项目中的用途                                 | 选择原因                             | 仓库或环境依据                                |
+| ------------------- | -------------------------------------------- | ------------------------------------ | --------------------------------------------- |
+| C++17               | 业务模型、算法封装和应用组合                 | 类型系统、RAII，与 Qt/CMake 配合成熟 | `CMakeLists.txt` 声明 `CMAKE_CXX_STANDARD 17` |
+| Qt Widgets          | 窗口、菜单、对话框、绘制、JSON、测试、信号槽 | 适合传统桌面 GUI                     | CMake 查找 Qt 6 Widgets；                     |
+| CMake 3.20+         | 目标、依赖、测试和 VS 工程生成               | 跨 IDE、可复现配置                   | 项目最低版本 3.20；本轮命令版本为 4.2.0       |
+| Visual Studio/MSVC  | Windows 编译和调试                           | 与 Qt Windows kit、CMake 生成器配合  | CMake 缓存生成器为 Visual Studio 2022         |
+| vcpkg               | 为 CMake 提供 Qt/OpenCV 工具链和运行时部署   | 统一第三方依赖发现                   | VS 预设和本地缓存包含 vcpkg toolchain         |
+| OpenCV core/imgproc | 基础图像处理                                 | 提供成熟矩阵与滤波算法               | CMake 声明并链接 core、imgproc                |
+| Qt JSON API         | 项目序列化                                   | 无需增加额外 JSON 依赖               | Repository 使用 Qt JSON；未发现 nlohmann-json |
+
+
+### 3.2 系统架构
+
+当前实现是“MVVM + Application 组合根 + Repository/Processor/Exporter”。
+
+```mermaid
+flowchart LR
+    U[用户操作] --> V[View: MainWindow / ImageCanvas]
+    V -- 请求 signals --> A[Application 组合根]
+    A -- connect --> VM[Image/Annotation/Label/Project/Process ViewModel]
+    VM --> M[ProjectModel]
+    VM --> S[Repository / Processor / Exporter]
+    M --> VM
+    VM -- changed / statusChanged / errorOccurred --> A
+    A --> V
+    V --> UI[画布、工具栏、状态栏、弹窗]
+```
+
+Qt signal 采用强类型参数传递，可在编译阶段发现类型不匹配，避免 `std::any` 可能引发的运行时参数错误和 `std::bad_any_cast`；在此基础上，系统还可进一步扩展通用的撤销/重做命令历史机制。
+
+
+### 3.3 项目目录结构
+
+```text
+PixelTagger/
+|-- CMakeLists.txt
+|-- CMakePresets.json
+|-- README.md
+|-- docs/
+|   |-- mvvm.md
+|   |-- *-team-handoff.md
+|   `-- report/
+|-- src/
+|   |-- app/          # Application 对象装配与信号绑定
+|   |-- common/       # ID、Result、变化枚举和展示 DTO
+|   |-- model/        # 项目、图片、类别、标注实体
+|   |-- viewmodel/    # 图片、标注、类别、项目和处理业务
+|   |-- view/         # MainWindow、ImageCanvas、坐标映射
+|   |-- repository/   # JSON 项目持久化
+|   |-- processor/    # Qt/OpenCV 转换与图像算法
+|   |-- exporter/     # YOLO 数据集导出
+|   `-- main.cpp
+`-- tests/           # Qt Test 自动化测试
+```
+
+`src/main.cpp` 只创建 `QApplication` 和 `Application`；`Application` 保证共享 `ProjectModel` 只有一个实例。`common/presentation` 的 DTO 防止 View 直接依赖可写 Model。
+### 3.4 核心数据流
+
+打开单图时，`MainWindow` 选择路径并发出 `importImageRequested`；`Application` 将其连接到 `ImageViewModel::loadImage`；ViewModel 用 `QImageReader` 读取元数据，调用 `ProjectModel::replaceImages`，再解码当前图并发出变化和状态信号。
+
+加载文件夹时，`ImageViewModel::importFolder` 使用扩展名过滤并按名称扫描，构建完整 `QVector<ImageModel>` 后一次性替换 Model。上一张/下一张由 `ProjectModel` 改变索引，边界失败时只发布状态文本。所有 ViewModel 错误最终由 `Application::bindFeedback` 连接至 `MainWindow::showError`。
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant View as MainWindow
+    participant App as Application
+    participant VM as ImageViewModel
+    participant Model as ProjectModel
+    participant Canvas as ImageCanvas
+    User->>View: 选择“打开图片”
+    View-->>App: importImageRequested(path)
+    App->>VM: loadImage(path)
+    VM->>VM: QImageReader 校验并读取图片
+    VM->>Model: replaceImages(images)
+    VM-->>App: changed(CurrentImage)
+    App->>VM: currentQImage()
+    App->>Canvas: setImage(image)
+    VM-->>App: statusChanged(message)
+    App->>View: showStatus(message)
+    Canvas->>Canvas: update() 后 paintEvent()
+```
+
+## 4. 核心模块设计与代码结构
+
+### 4.1 主窗口模块
+
+`MainWindow` 创建“文件、浏览、视图”菜单、标注工具栏和图像处理停靠面板。文件对话框负责收集图片、文件夹、JSON 项目、导出目录及处理结果路径；窗口不直接修改 `ProjectModel`。图片打开使用 `QKeySequence::Open`，保存项目使用 `QKeySequence::Save`，浏览使用 PgUp/PgDown 与 Ctrl+方向键，删除标注使用 Delete，缩放和适应窗口也有快捷键。状态反馈进入 `QStatusBar`，错误通过 `QMessageBox::warning` 展示。
+
+其局限是菜单和处理面板均在一个实现文件中，规模继续扩大后可拆成专用 widget/action factory；此外 GUI 请求由 signals 暴露，依赖 `Application` 完整绑定，缺少绑定会静默失效。
+
+### 4.2 图像显示模块
+
+`ImageCanvas::paintEvent` 先绘制深色背景；无图时居中显示“打开一张图片开始”。有图时根据 `Qt::KeepAspectRatio` 计算视口，结合缩放因子和偏移居中绘制，设置 `QPainter::SmoothPixmapTransform` 实现平滑显示。`setImage` 清理交互状态、重置缩放和平移、更新坐标映射并调用 `update()`；`setAnnotations` 同样触发重绘。
+
+`CoordinateMapper` 在窗口坐标与原图坐标间转换，因此标注不会因窗口缩放改变业务坐标。Canvas 还支持滚轮缩放、中键平移、命中选择、矩形创建、移动和四角缩放。当前只提供矩形，且大图作为完整 `QImage` 保存在内存中，没有瓦片化或分级缓存。
+
+### 4.3 图片业务模块
+
+`ImageViewModel` 集中处理单图导入、文件夹扫描、当前图解码和导航。支持后缀为 PNG、JPG、JPEG、BMP、GIF；GIF 通过普通 `QImage` 加载路径处理，代码中没有动画帧播放逻辑，因此只应视为静态显示。`readImage` 保存绝对路径、文件名、相对路径和宽高，导入时初始化 `modified=false`。状态文本格式为“文件名 宽x高 当前位置/总数”。
+
+首尾导航不改变索引，并发布“已经是第一/最后一张图片”。空文件夹、目录不存在、图片不可读或当前图解码失败则发出 `errorOccurred`。目录扫描非递归且同步；为了便于实现，我们目前选择的异常处理方案是任一候选图片不可读会终止整批导入。
+
+### 4.4 数据模型模块
+
+`ImageModel` 保存 `id`、文件绝对/相对路径、文件名、宽高、修改状态和标注列表。`AnnotationModel` 保存标注 ID、类别 ID 和原图坐标 `QRectF`；`LabelModel` 保存类别 ID、名称和颜色。
+
+`ProjectModel` 保存图片列表、类别列表、当前索引、项目修改状态及下一组实体 ID。它提供受控的替换项目、导航、增加/删除/更新标注、类别增删改查、占用检查和 `markSaved`，避免 View 获得可写数据指针。
+
+当前调用边界是：View 发出强类型请求 signal，`Application` 将请求连接到对应 ViewModel；ViewModel 修改 Model，再以 `changed`、`statusChanged`、`errorOccurred` 等信号反向通知。这降低了 View 与具体业务实现的耦合，并保留统一接入快捷键的入口。
+
+
+### 4.6 标注、类别、处理与导出模块
+
+`AnnotationViewModel` 将拖拽框归一化并裁剪到图片边界，拒绝小于 3×3 原图像素的框；它维护当前类别与选中标注 ID，并通过 `AnnotationRenderData` 向 Canvas 提供颜色、名称和选中状态。`LabelViewModel` 处理类别新增、删除、重命名、改色和当前类别切换；正在使用的类别由 Model 保护。
+
+`ProcessViewModel` 使用 `ImageConverter` 在 `QImage` 与 `cv::Mat` 之间转换，调用 `ImageProcessor` 生成非破坏性预览，支持恢复原图与另存结果。预览不直接回写项目图片或标注坐标。`JsonProjectRepository` 负责项目文件，`YoloExporter` 验证图片、类别与矩形后在暂存目录生成数据集，并拒绝非空导出目录和重名输出。YOLO 当前将同一 `images` 同时写作 train/val 路径，尚未实现数据集划分策略。
+
+## 5. 项目界面与验证材料
+
+> 下列前三张为报告必需图片引用，但文件当前尚不存在，均已在 `SCREENSHOT_CHECKLIST.md` 标为“待截图”。导出最终 PDF 前必须用真实运行截图补齐。
+
+
+## 6. 构建、运行与测试
+
+### 6.1 开发环境
+<!-- TODO -->
+| 项目          | 配置                                                                      |
+| ------------- | ------------------------------------------------------------------------- |
+| 操作系统      | Windows；具体版本【待填写】                                               |
+| 编译器        | MSVC；具体工具集版本【待填写】                                            |
+| Visual Studio | 当前缓存为 Visual Studio 2022 Community，课程提交环境请复核               |
+| CMake         | 本轮命令输出 4.2.0；项目最低要求 3.20                                     |
+| Qt            | 当前 CMake 缓存找到 vcpkg 的 Qt 6；README 记录 6.11.1，最终版本请本机复核 |
+| C++ 标准      | C++17                                                                     |
+| OpenCV        | CMake 查找并链接 core、imgproc；README 记录 4.12.0                        |
+| vcpkg         | CMake 缓存和预设指向 `x64-windows` 工具链；私人绝对路径不写入报告         |
+
+### 6.2 构建过程
+
+推荐按仓库预设执行：
+
+```powershell
+cmake --preset vs2022-x64 -DCMAKE_PREFIX_PATH=<QtPrefix>
+cmake --build --preset vs2022-x64 --config Debug
+ctest --test-dir build/vs2022-x64 -C Debug --output-on-failure
+```
+
+也可在现有构建目录中执行：
+
+```powershell
+cmake --build build/vs2022-x64 --config Debug
+```
+### 6.3 测试方案结果
+<!-- TODO -->
+GUI 验收表中的“实际结果”必须由成员运行并填写：
+
+| 编号 | 测试内容       | 操作步骤               | 预期结果             | 实际结果   | 证据        |
+| ---- | -------------- | ---------------------- | -------------------- | ---------- | ----------- |
+| T01  | 程序启动       | 启动程序               | 显示空画布和就绪状态 | 【待填写】 | 图 5-1      |
+| T02  | 打开有效图片   | 选择 PNG/JPG           | 图片正常显示         | 【待填写】 | 图 5-2      |
+| T03  | 加载图片文件夹 | 选择含多图文件夹       | 加载第一张图片       | 【待填写】 | 图 5-3      |
+| T04  | 下一张         | 执行下一张命令         | 索引增加             | 【待填写】 | 图 5-3/待补 |
+| T05  | 第一张边界     | 第一张执行上一张       | 状态栏给出边界提示   | 【待填写】 | 图 5-4      |
+| T06  | 最后一张边界   | 最后一张执行下一张     | 状态栏给出边界提示   | 【待填写】 | 图 5-4      |
+| T07  | 空文件夹       | 选择无图片文件夹       | 弹出错误提示         | 【待填写】 | 图 5-4      |
+| T08  | 无效图片       | 选择无法解析的候选文件 | 弹出错误提示         | 【待填写】 | 图 5-4      |
+| T09  | 窗口缩放       | 改变窗口大小           | 图片等比例重绘       | 【待填写】 | 待补截图    |
+
+自动化测试方面，`CMakeLists.txt` 登记 9 个 Qt Test 目标，覆盖类别 Model/ViewModel、标注编辑、主窗口删除动作、Canvas 缩放与编辑、OpenCV 处理、处理 ViewModel、YOLO 导出和项目导出。项目可以达到测试全通过。
+
+## 7. 团队协作与项目管理
+
+### 7.1 团队分工
+<!-- TODO -->
+| 成员      | 主要角色   | 负责模块   | 主要产出   | 协作对象   |
+| --------- | ---------- | ---------- | ---------- | ---------- |
+| 【成员1】 | 【待填写】 | 【待填写】 | 【待填写】 | 【待填写】 |
+| 【成员2】 | 【待填写】 | 【待填写】 | 【待填写】 | 【待填写】 |
+| 【成员3】 | 【待填写】 | 【待填写】 | 【待填写】 | 【待填写】 |
+
+同时，使用了类别编辑、图像处理和 YOLO 的交接文档，便于团队成员协作。
+
+### 7.3 模块集成方式
+
+团队可围绕稳定接口并行：Model 约定实体 ID、原图矩形与 dirty 语义；ViewModel 暴露业务方法和强类型信号；`Application` 统一连接；View 只处理绘制和输入；CMake 负责把新增源文件、库和测试接入目标。实际由谁负责哪一层、合并中发生过哪些冲突仍需成员填写，不能从提交主题机械推断完整分工。
+
+## 8. 智能体使用说明
+
+### 8.1 智能体基本配置
+
+
+| 配置项     | 实际配置                                            |
+| ---------- | --------------------------------------------------- |
+| 智能体名称 | Codex                                               |
+| 使用方式   | 当前为仓库工作区会话；CLI、IDE 或其他入口【待填写】 |
+| 使用模型   | GPT 5.6sol                                          |
+| 工作目录   | PixelTagger 仓库根目录                              |
+
+
+### 8.3 规则文档
+<!-- TODO:这样写合理吗 -->
+
+使用 `docs/mvvm.md`， 在人工审核的同时明确约束 View 不直接修改 Model、ViewModel 负责业务和展示数据、Model 不依赖 QWidget、大数据变化经 `changed(ViewModelChange)` 通知并由 `Application` 拉取 getter。
+
+
+
+### 8.5 团队成员与智能体的分工机制
+
+结合本项目，人的职责是确认功能范围和 MVVM 边界、决定 JSON/YOLO 兼容策略、实际操作 GUI、判断交互质量智能体适合批量检索类和信号、对照 CMake/Git、生成初版文档、运行重复性检查。
+
+<!-- TODO！！！，感觉有点难写 -->
+
+
+
+
+
+## 9. 项目实际效果与问题分析
+
+
+
+
+### 9.2 技术优点
+
+目录职责清晰，Model 不依赖界面，ViewModel 集中业务状态，`Application` 统一请求绑定，Qt signal 用于反向通知。图片绘制、坐标映射与项目业务分离，标注坚持原图坐标；展示 DTO 避免 View 获得可写 Model；Repository、Processor 和 Exporter 形成清晰的外围能力边界。
+
+### 9.3 当前不足
+
+- 标注类型只有矩形，没有多边形、画笔或关键点。
+- 缺少撤销/重做、自动保存和最近项目；modified 状态尚未形成完整关闭提醒流程。
+- 文件夹一次性同步扫描和逐图读元数据，大目录可能阻塞；失败策略会因单个坏文件中止全部导入。
+- 大图完整解码并复制到处理 ViewModel，内存占用和响应时间有风险。
+<!-- TODO：要不要写存疑
+### 9.4 
+
+#### P0：巩固最小标注闭环
+
+P0 应优先核验矩形、类别、保存/读取和修改状态相关代码路径，补充关闭前未保存提示、项目 schema 版本、重新加载回归测试、YOLO CTest 异常定位，并以真实 GUI 测试确认创建—编辑—保存—重开闭环；再评估多边形等新标注实体。
+
+#### P1：工程可用性
+
+引入强类型撤销/重做命令、自动保存、最近项目、操作快捷键说明、异步目录扫描、坏图跳过策略和更细粒度错误信息。缩放和平移存在相关代码，P1 还需补充体验验证与边界优化。
+
+#### P2：格式与处理能力
+
+扩展通用 JSON/XML 标注导出、YOLO 数据集划分、批处理和更多 OpenCV 流程；只有在确有跨库需求时再评估 nlohmann-json。以上均列入后续计划。 -->
+
+
+## 11. 个人总结
+<!-- TODO -->
+以下仅提供不同关注点的写作提示，不代写个人经历。每位成员须结合真实工作独立撰写，建议“深度反思”不少于 500 字。
+
+### 11.1 成员一：【姓名】
+
+#### 承担角色
+
+【待本人填写：角色及与其他模块的接口】
+
+#### 参与内容
+
+【待本人填写：参与的文件、功能、测试或文档证据】
+
+#### 主要挑战
+
+【待本人填写：重点回顾架构边界或数据模型问题】
+
+#### 应对策略
+
+【待本人填写：实际尝试、失败方案和最终选择】
+
+#### 能力成长
+
+【待本人填写：C++/MVVM/接口设计方面的具体变化】
+
+#### 深度反思
+
+【待本人独立撰写，建议不少于 500 字】
+
+### 11.2 成员二：【姓名】
+
+#### 承担角色
+
+【待本人填写：角色及交互或可视化职责】
+
+#### 参与内容
+
+【待本人填写：参与的界面、Canvas、坐标或用户反馈证据】
+
+#### 主要挑战
+
+【待本人填写：重点回顾 Qt 事件、绘制或联调问题】
+
+#### 应对策略
+
+【待本人填写：调试工具、测试场景和协作沟通】
+
+#### 能力成长
+
+【待本人填写：Qt GUI 与用户体验判断方面的收获】
+
+#### 深度反思
+
+【待本人独立撰写，建议不少于 500 字，不复制成员一】
+
+### 11.3 成员三：【姓名】
+
+#### 承担角色
+
+【待本人填写：角色及构建、算法、导出或质量职责】
+
+#### 参与内容
+
+【待本人填写：参与的 CMake、OpenCV、YOLO、测试或集成证据】
+
+#### 主要挑战
+
+【待本人填写：重点回顾依赖、测试一致性或交付问题】
+
+#### 应对策略
+
+【待本人填写：环境复现、错误定位和风险控制】
+
+#### 能力成长
+
+【待本人填写：工程化、测试或 Git 协作方面的收获】
+
+#### 深度反思
+
+【待本人独立撰写，建议不少于 500 字，不复制前两位】
+
+## 12. 课程改进建议
+
+1. 现有问题：Qt 与 MSVC/vcpkg 组合的首次配置成本高。改进措施：课程早期提供可编译的 Qt/CMake 最小模板及环境诊断脚本。预期效果：把时间从环境猜错转向功能和架构实践。
+2. 现有问题：学生容易把 MVVM 理解为目录命名。改进措施：提供含 View 请求、组合根绑定、ViewModel 更新 Model 和 signal 反向通知的可运行案例，并比较 MVC/Command。预期效果：以调用边界而非概念口号评价架构。
+3. 现有问题：分支合并后才发现接口不一致。改进措施：设置 Model、ViewModel、UI 接入三个阶段性代码审查点，并要求接口变更记录。预期效果：降低集中联调风险。
+4. 现有问题：只练习 commit，缺少 PR 和审查证据。改进措施：安排一次必须经过分支、Pull Request、评审意见和修正提交的协作任务。预期效果：形成可追溯的团队质量过程。
+5. 现有问题：GUI 项目容易混淆构建结果与交付状态。改进措施：增加 Qt 插件/运行库部署、依赖管理、Debug/Release 和干净机器验证教学。预期效果：使构建记录与可运行交付得到区分。
+6. 现有问题：智能体使用记录可能只保留结果，缺少审核过程。改进措施：统一记录目标、改动文件、编译结果、人工检查、二次修正和脱敏要求。预期效果：能够评价辅助效率和人的判断责任。
+7. 现有问题：智能体可能虚构功能或测试。改进措施：提供基于源码位置、命令输出、截图和敏感信息检查的审核清单。预期效果：让报告结论可验证。
+8. 现有问题：期末才集中发现范围失控。改进措施：安排中期演示，要求展示最小闭环、待办清单和前三项风险。预期效果：尽早调整目标。
+9. 现有问题：只看功能数量会忽视结构和协作。改进措施：评分同时覆盖可运行效果、代码质量、自动化测试、Git 过程和个人反思。预期效果：鼓励可维护成果。
+10. 现有问题：截图口径不统一。改进措施：提前规定窗口尺寸、必需场景、状态栏上下文、图注和隐私遮挡。预期效果：提升报告证据的可比性与可信度。
+
+## 13. 总结与展望
+
+PixelTagger 当前代码采用 MVVM 方向组织：共享 Model 承载图片、类别和标注，多个 ViewModel 组织业务，`Application` 连接 View 请求与状态反馈，Repository、Processor 和 Exporter 分别对应 JSON、OpenCV 与 YOLO 相关代码。现阶段重点是核对这些边界和代码路径，并通过运行、截图和测试确认实际效果。
+
+本轮实践也暴露出同步加载、大图内存、矩形类型单一、缺少撤销/自动保存、YOLO 测试执行不一致和 GUI 证据不足等问题。团队协作与智能体可以提高检索、初步实现和文档整理效率，但真实交互、测试异常、个人贡献和最终质量仍需人负责。下一阶段应先补齐截图与端到端验收、定位失败测试并巩固保存闭环，再扩展标注类型、异步能力和导出策略。
+
