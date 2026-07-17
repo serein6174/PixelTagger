@@ -74,6 +74,20 @@ if(MSVC)
     target_compile_options(AnnotaVision PRIVATE /utf-8)
 endif()
 
+if(WIN32)
+    add_custom_command(
+        TARGET AnnotaVision
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_FILE_DIR:AnnotaVision>/platforms"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:Qt${QT_VERSION_MAJOR}::QWindowsIntegrationPlugin>"
+                "$<TARGET_FILE_DIR:AnnotaVision>/platforms/"
+        COMMENT "Deploying the Qt Windows platform plugin"
+        VERBATIM
+    )
+endif()
+
 include(CTest)
 
 if(BUILD_TESTING)
@@ -82,6 +96,7 @@ if(BUILD_TESTING)
     function(add_annotavision_test target source)
         add_executable(${target}
             ${source}
+            ${ARGN}
             tests/TestFixtures.h
 
             src/common/types/EntityIds.h
@@ -135,6 +150,16 @@ if(BUILD_TESTING)
     add_annotavision_test(
         AnnotationEditingTests
         tests/annotation/AnnotationEditingTests.cpp
+    )
+    add_annotavision_test(
+        MainWindowAnnotationTests
+        tests/view/MainWindowAnnotationTests.cpp
+        src/view/canvas/CoordinateMapper.h
+        src/view/canvas/CoordinateMapper.cpp
+        src/view/canvas/ImageCanvas.h
+        src/view/canvas/ImageCanvas.cpp
+        src/view/MainWindow.h
+        src/view/MainWindow.cpp
     )
 
     function(add_image_processing_test target source)

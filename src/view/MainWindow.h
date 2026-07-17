@@ -35,6 +35,7 @@ signals:
     void labelColorChangeRequested(LabelId labelId, const QColor& color);
     void currentLabelChangeRequested(LabelId labelId);
     void selectedAnnotationLabelChangeRequested(LabelId labelId);
+    void deleteSelectedAnnotationRequested();
     void exportYoloRequested(const QString& outputDirectory);
     void grayscaleRequested();
     void binaryRequested(int threshold);
@@ -65,6 +66,7 @@ private slots:
     void removeCurrentLabel();
     void changeCurrentLabelColor();
     void applyCurrentLabelToSelectedAnnotation();
+    void deleteSelectedAnnotation();
     void applyProcessPreview();
     void saveProcessPreview();
 
@@ -82,6 +84,7 @@ private:
     QAction* removeLabelAction_ = nullptr;
     QAction* changeLabelColorAction_ = nullptr;
     QAction* applyLabelToAnnotationAction_ = nullptr;
+    QAction* deleteSelectedAnnotationAction_ = nullptr;
     QComboBox* processComboBox_ = nullptr;
     QStackedWidget* processParameterStack_ = nullptr;
     QSpinBox* binaryThresholdSpinBox_ = nullptr;

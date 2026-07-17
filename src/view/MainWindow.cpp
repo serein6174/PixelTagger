@@ -177,6 +177,23 @@ void MainWindow::createToolBar()
         this,
         &MainWindow::applyCurrentLabelToSelectedAnnotation
     );
+
+    deleteSelectedAnnotationAction_ = toolBar->addAction(
+        style()->standardIcon(QStyle::SP_TrashIcon),
+        QStringLiteral("删除选中标注")
+    );
+    deleteSelectedAnnotationAction_->setObjectName(
+        QStringLiteral("deleteSelectedAnnotationAction")
+    );
+    deleteSelectedAnnotationAction_->setShortcut(QKeySequence::Delete);
+    deleteSelectedAnnotationAction_->setShortcutContext(Qt::WindowShortcut);
+    deleteSelectedAnnotationAction_->setEnabled(false);
+    connect(
+        deleteSelectedAnnotationAction_,
+        &QAction::triggered,
+        this,
+        &MainWindow::deleteSelectedAnnotation
+    );
 }
 
 void MainWindow::createProcessDock()
@@ -431,6 +448,9 @@ void MainWindow::setAnnotationEditEnabled(bool enabled)
         applyLabelToAnnotationAction_->setEnabled(enabled && labelComboBox_ &&
                                                   labelComboBox_->count() > 0);
     }
+    if (deleteSelectedAnnotationAction_) {
+        deleteSelectedAnnotationAction_->setEnabled(enabled);
+    }
 }
 
 void MainWindow::setProcessPreviewActionsEnabled(bool enabled)
@@ -492,6 +512,12 @@ void MainWindow::changeCurrentLabelColor()
 void MainWindow::applyCurrentLabelToSelectedAnnotation()
 {
     emit selectedAnnotationLabelChangeRequested(currentComboLabelId());
+    canvas_->setFocus(Qt::OtherFocusReason);
+}
+
+void MainWindow::deleteSelectedAnnotation()
+{
+    emit deleteSelectedAnnotationRequested();
     canvas_->setFocus(Qt::OtherFocusReason);
 }
 
