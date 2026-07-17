@@ -70,6 +70,8 @@ void Application::bindAnnotationFlow()
                      &annotationViewModel_, &AnnotationViewModel::setSelectedAnnotationLabel);
     QObject::connect(&mainWindow_, &MainWindow::deleteSelectedAnnotationRequested,
                      &annotationViewModel_, &AnnotationViewModel::deleteSelectedAnnotation);
+    QObject::connect(&canvas, &ImageCanvas::selectedAnnotationRectChangeRequested,
+                     &annotationViewModel_, &AnnotationViewModel::updateSelectedAnnotationRect);
 
     QObject::connect(&annotationViewModel_, &AnnotationViewModel::changed,
                      &mainWindow_, [this, &canvas](ViewModelChange change) {

@@ -128,6 +128,19 @@ void MainWindow::createMenus()
     nextAction->setShortcutContext(Qt::WindowShortcut);
     connect(nextAction, &QAction::triggered,
             this, &MainWindow::nextImageRequested);
+
+    QMenu* viewMenu = menuBar()->addMenu(QStringLiteral("视图"));
+    QAction* zoomInAction = viewMenu->addAction(QStringLiteral("放大"));
+    zoomInAction->setShortcut(QKeySequence::ZoomIn);
+    connect(zoomInAction, &QAction::triggered, canvas_, &ImageCanvas::zoomIn);
+
+    QAction* zoomOutAction = viewMenu->addAction(QStringLiteral("缩小"));
+    zoomOutAction->setShortcut(QKeySequence::ZoomOut);
+    connect(zoomOutAction, &QAction::triggered, canvas_, &ImageCanvas::zoomOut);
+
+    QAction* fitWindowAction = viewMenu->addAction(QStringLiteral("适应窗口"));
+    fitWindowAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+0")));
+    connect(fitWindowAction, &QAction::triggered, canvas_, &ImageCanvas::resetView);
 }
 
 void MainWindow::createToolBar()

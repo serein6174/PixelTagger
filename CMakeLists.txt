@@ -161,6 +161,14 @@ if(BUILD_TESTING)
         src/view/MainWindow.h
         src/view/MainWindow.cpp
     )
+    add_annotavision_test(
+        ImageCanvasInteractionTests
+        tests/view/ImageCanvasInteractionTests.cpp
+        src/view/canvas/CoordinateMapper.h
+        src/view/canvas/CoordinateMapper.cpp
+        src/view/canvas/ImageCanvas.h
+        src/view/canvas/ImageCanvas.cpp
+    )
 
     function(add_image_processing_test target source)
         add_executable(${target}
