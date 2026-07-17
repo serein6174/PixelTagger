@@ -12,6 +12,7 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QPainter>
@@ -129,16 +130,16 @@ void MainWindow::createMenus()
     connect(nextAction, &QAction::triggered,
             this, &MainWindow::nextImageRequested);
 
-    QMenu* viewMenu = menuBar()->addMenu(QStringLiteral("视图"));
-    QAction* zoomInAction = viewMenu->addAction(QStringLiteral("放大"));
-    zoomInAction->setShortcut(QKeySequence::ZoomIn);
+    viewMenu_ = menuBar()->addMenu(QStringLiteral("视图"));
+    QAction* zoomInAction = viewMenu_->addAction(QStringLiteral("放大"));
+    zoomInAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+Shift+=")));
     connect(zoomInAction, &QAction::triggered, canvas_, &ImageCanvas::zoomIn);
 
-    QAction* zoomOutAction = viewMenu->addAction(QStringLiteral("缩小"));
+    QAction* zoomOutAction = viewMenu_->addAction(QStringLiteral("缩小"));
     zoomOutAction->setShortcut(QKeySequence::ZoomOut);
     connect(zoomOutAction, &QAction::triggered, canvas_, &ImageCanvas::zoomOut);
 
-    QAction* fitWindowAction = viewMenu->addAction(QStringLiteral("适应窗口"));
+    QAction* fitWindowAction = viewMenu_->addAction(QStringLiteral("适应窗口"));
     fitWindowAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+0")));
     connect(fitWindowAction, &QAction::triggered, canvas_, &ImageCanvas::resetView);
 }
@@ -311,6 +312,11 @@ void MainWindow::createProcessDock()
     layout->addStretch(1);
     dock->setWidget(panel);
     addDockWidget(Qt::RightDockWidgetArea, dock);
+
+    if (viewMenu_) {
+        viewMenu_->addSeparator();
+        viewMenu_->addAction(dock->toggleViewAction());
+    }
 }
 
 void MainWindow::connectView()

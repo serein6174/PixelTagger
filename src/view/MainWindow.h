@@ -10,6 +10,7 @@
 class QAction;
 class QComboBox;
 class QDoubleSpinBox;
+class QMenu;
 class QSpinBox;
 class QStackedWidget;
 
@@ -80,6 +81,7 @@ private:
     int currentKernelSize(QComboBox* comboBox) const noexcept;
 
     ImageCanvas* canvas_ = nullptr;
+    QMenu* viewMenu_ = nullptr;
     QComboBox* labelComboBox_ = nullptr;
     QAction* removeLabelAction_ = nullptr;
     QAction* changeLabelColorAction_ = nullptr;
