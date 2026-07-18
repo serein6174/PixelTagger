@@ -53,20 +53,16 @@ void ImageViewModel::previousImage()
     loadCurrentImage();
 }
 
-void ImageViewModel::onProjectChanged(ViewModelChange change)
+void ImageViewModel::onProjectChanged()
 {
-    if (change != ViewModelChange::Project) {
-        return;
-    }
-
     currentImage_ = QImage{};
     if (!project_.hasCurrentImage()) {
-        emit changed(ViewModelChange::CurrentImage);
+        emit currentImageChanged();
         return;
     }
 
     if (!loadCurrentImage()) {
-        emit changed(ViewModelChange::CurrentImage);
+        emit currentImageChanged();
     }
 }
 
@@ -171,7 +167,7 @@ bool ImageViewModel::loadCurrentImage()
         return false;
     }
     currentImage_ = image;
-    emit changed(ViewModelChange::CurrentImage);
+    emit currentImageChanged();
     emit statusChanged(QStringLiteral("%1  %2x%3  %4")
                            .arg(model.fileName).arg(model.width).arg(model.height)
                            .arg(imagePositionText()));

@@ -121,7 +121,7 @@ sequenceDiagram
     App->>VM: loadImage(path)
     VM->>VM: QImageReader 校验并读取图片
     VM->>Model: replaceImages(images)
-    VM-->>App: changed(CurrentImage)
+    VM-->>App: currentImageChanged()
     App->>VM: currentQImage()
     App->>Canvas: setImage(image)
     VM-->>App: statusChanged(message)
@@ -160,7 +160,7 @@ sequenceDiagram
 
 ### 4.6 标注、类别、处理与导出模块
 
-`AnnotationViewModel` 将拖拽框归一化并裁剪到图片边界，拒绝小于 3×3 原图像素的框；它维护当前类别与选中标注 ID，并通过 `AnnotationRenderData` 向 Canvas 提供颜色、名称和选中状态。`LabelViewModel` 处理类别新增、删除、重命名、改色和当前类别切换；正在使用的类别由 Model 保护。
+`AnnotationViewModel` 将拖拽框归一化并裁剪到图片边界，拒绝小于 3×3 原图像素的框；它维护当前类别与选中标注 ID，并通过 `AnnotationRenderItem` 向 Canvas 提供颜色、名称和选中状态。`LabelViewModel` 处理类别新增、删除、重命名、改色和当前类别切换；正在使用的类别由 Model 保护。
 
 `ProcessViewModel` 使用 `ImageConverter` 在 `QImage` 与 `cv::Mat` 之间转换，调用 `ImageProcessor` 生成非破坏性预览，支持恢复原图与另存结果。预览不直接回写项目图片或标注坐标。`JsonProjectRepository` 负责项目文件，`YoloExporter` 验证图片、类别与矩形后在暂存目录生成数据集，并拒绝非空导出目录和重名输出。YOLO 当前将同一 `images` 同时写作 train/val 路径，尚未实现数据集划分策略。
 
@@ -249,7 +249,7 @@ GUI 验收表中的“实际结果”必须由成员运行并填写：
 ### 8.3 规则文档
 <!-- TODO:这样写合理吗 -->
 
-使用 `docs/mvvm.md`， 在人工审核的同时明确约束 View 不直接修改 Model、ViewModel 负责业务和展示数据、Model 不依赖 QWidget、大数据变化经 `changed(ViewModelChange)` 通知并由 `Application` 拉取 getter。
+使用 `docs/mvvm.md`， 在人工审核的同时明确约束 View 不直接修改 Model、ViewModel 负责业务和展示数据、Model 不依赖 QWidget、大数据变化经语义明确的无参信号通知并由 `Application` 拉取 getter。
 
 
 

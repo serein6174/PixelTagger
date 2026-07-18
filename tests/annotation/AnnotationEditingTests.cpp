@@ -94,7 +94,10 @@ void AnnotationEditingTests::viewModelEditsSelectedAnnotation()
         project.currentImage()->annotations.front().id;
 
     QSignalSpy selectionSpy(&annotations, &AnnotationViewModel::selectionChanged);
-    QSignalSpy changedSpy(&annotations, &AnnotationViewModel::changed);
+    QSignalSpy changedSpy(
+        &annotations,
+        &AnnotationViewModel::annotationsChanged
+    );
     QSignalSpy errorSpy(&annotations, &AnnotationViewModel::errorOccurred);
 
     annotations.selectAnnotation(annotationId);
@@ -147,7 +150,7 @@ void AnnotationEditingTests::viewModelClearsSelectionWhenImageChanges()
 
     QSignalSpy selectionSpy(&annotations, &AnnotationViewModel::selectionChanged);
     QVERIFY(project.moveNextImage());
-    annotations.onImageViewModelChanged(ViewModelChange::CurrentImage);
+    annotations.onCurrentImageChanged();
 
     QVERIFY(!annotations.selectedAnnotationId().has_value());
     QCOMPARE(selectionSpy.count(), 1);

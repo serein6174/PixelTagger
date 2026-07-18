@@ -6,16 +6,15 @@
 #include <QVector>
 
 #include "model/ProjectModel.h"
-#include "common/presentation/AnnotationRenderData.h"
+#include "common/presentation/AnnotationRenderItem.h"
 #include "common/types/EntityIds.h"
-#include "common/types/ViewModelChange.h"
 
 class AnnotationViewModel : public QObject {
     Q_OBJECT
 
 public:
     explicit AnnotationViewModel(ProjectModel& project);
-    QVector<AnnotationRenderData> annotationItems() const;
+    QVector<AnnotationRenderItem> annotationItems() const;
     LabelId currentLabelId() const noexcept;
     std::optional<AnnotationId> selectedAnnotationId() const noexcept;
 
@@ -27,11 +26,11 @@ public slots:
     void updateSelectedAnnotationRect(const QRectF& imageRect);
     void setSelectedAnnotationLabel(LabelId labelId);
     void setCurrentLabelId(LabelId labelId);
-    void onImageViewModelChanged(ViewModelChange change);
-    void onLabelViewModelChanged(ViewModelChange change);
+    void onCurrentImageChanged();
+    void onLabelsChanged();
 
 signals:
-    void changed(ViewModelChange change);
+    void annotationsChanged();
     void selectionChanged(bool hasSelection);
     void errorOccurred(const QString& message);
 

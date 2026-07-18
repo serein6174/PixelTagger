@@ -37,7 +37,7 @@ void ImageCanvas::setImage(const QImage& image)
     update();
 }
 
-void ImageCanvas::setAnnotations(const QVector<AnnotationRenderData>& annotations)
+void ImageCanvas::setAnnotations(const QVector<AnnotationRenderItem>& annotations)
 {
     annotations_ = annotations;
     update();
@@ -118,7 +118,7 @@ void ImageCanvas::mousePressEvent(QMouseEvent* event)
         return;
     }
 
-    const AnnotationRenderData* selected = selectedAnnotation();
+    const AnnotationRenderItem* selected = selectedAnnotation();
     if (selected) {
         const AnnotationEditMode handle = resizeHandleAt(event->position(), *selected);
         if (handle != AnnotationEditMode::None) {
@@ -135,7 +135,7 @@ void ImageCanvas::mousePressEvent(QMouseEvent* event)
     if (hitAnnotationId >= 0) {
         drawingAnnotation_ = false;
         emit annotationSelectRequested(hitAnnotationId);
-        const AnnotationRenderData* annotation = annotationById(hitAnnotationId);
+        const AnnotationRenderItem* annotation = annotationById(hitAnnotationId);
         if (annotation) {
             beginAnnotationEdit(
                 *annotation,
@@ -332,11 +332,11 @@ AnnotationId ImageCanvas::annotationAt(const QPointF& widgetPoint) const
     return -1;
 }
 
-const AnnotationRenderData* ImageCanvas::annotationById(
+const AnnotationRenderItem* ImageCanvas::annotationById(
     AnnotationId annotationId
 ) const
 {
-    for (const AnnotationRenderData& annotation : annotations_) {
+    for (const AnnotationRenderItem& annotation : annotations_) {
         if (annotation.id == annotationId) {
             return &annotation;
         }
@@ -344,9 +344,9 @@ const AnnotationRenderData* ImageCanvas::annotationById(
     return nullptr;
 }
 
-const AnnotationRenderData* ImageCanvas::selectedAnnotation() const
+const AnnotationRenderItem* ImageCanvas::selectedAnnotation() const
 {
-    for (const AnnotationRenderData& annotation : annotations_) {
+    for (const AnnotationRenderItem& annotation : annotations_) {
         if (annotation.selected) {
             return &annotation;
         }
@@ -356,7 +356,7 @@ const AnnotationRenderData* ImageCanvas::selectedAnnotation() const
 
 ImageCanvas::AnnotationEditMode ImageCanvas::resizeHandleAt(
     const QPointF& widgetPoint,
-    const AnnotationRenderData& annotation
+    const AnnotationRenderItem& annotation
 ) const
 {
     const QRectF widgetRect = mapper_.imageToWidget(annotation.imageRect);
@@ -386,7 +386,7 @@ ImageCanvas::AnnotationEditMode ImageCanvas::resizeHandleAt(
 }
 
 void ImageCanvas::beginAnnotationEdit(
-    const AnnotationRenderData& annotation,
+    const AnnotationRenderItem& annotation,
     AnnotationEditMode mode,
     const QPointF& imagePoint
 )
@@ -444,7 +444,7 @@ QRectF ImageCanvas::annotationEditRect(const QPointF& imagePoint) const
 }
 
 QRectF ImageCanvas::visibleAnnotationRect(
-    const AnnotationRenderData& annotation
+    const AnnotationRenderItem& annotation
 ) const
 {
     if (annotation.id == editingAnnotationId_ &&
@@ -458,7 +458,7 @@ void ImageCanvas::drawAnnotations(QPainter& painter)
 {
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    for (const AnnotationRenderData& annotation : annotations_) {
+    for (const AnnotationRenderItem& annotation : annotations_) {
         const QRectF widgetRect = mapper_.imageToWidget(
             visibleAnnotationRect(annotation)
         );

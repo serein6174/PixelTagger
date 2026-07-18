@@ -3,7 +3,7 @@
 #include <QMainWindow>
 #include <QVector>
 
-#include "common/presentation/LabelViewData.h"
+#include "common/presentation/LabelPresentationData.h"
 #include "common/types/EntityIds.h"
 #include "view/canvas/ImageCanvas.h"
 
@@ -53,7 +53,7 @@ public slots:
     void showStatus(const QString& message);
     void showError(const QString& message);
     void setCurrentLabelName(const QString& name);
-    void setLabels(const QVector<LabelViewData>& labels);
+    void setLabels(const QVector<LabelPresentationData>& labels);
     void setAnnotationEditEnabled(bool enabled);
     void setProcessPreviewActionsEnabled(bool enabled);
 

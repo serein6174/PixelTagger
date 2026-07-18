@@ -16,9 +16,9 @@ void prepareCanvas(ImageCanvas& canvas)
     canvas.setImage(image);
 }
 
-AnnotationRenderData selectedAnnotation()
+AnnotationRenderItem selectedAnnotation()
 {
-    AnnotationRenderData annotation;
+    AnnotationRenderItem annotation;
     annotation.id = 1;
     annotation.imageRect = QRectF(20, 20, 20, 20);
     annotation.labelName = QStringLiteral("object");

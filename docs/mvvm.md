@@ -16,8 +16,8 @@
 - 暴露面向界面的业务方法，例如 `loadImage()`、`nextImage()`、`createAnnotation()`、`setCurrentLabelName()`。
 - 维护当前图片、当前类别、当前选中标注等界面业务状态。
 - 修改 Model，但通过 `ProjectModel` 的受控接口修改。
-- 将 Model 转换为 View 专用展示数据，例如 `AnnotationRenderData`。
-- 对大数据变化只发 `changed(ViewModelChange)` 枚举通知，View 再通过 ViewModel getter 拉取展示数据。
+- 将 Model 转换为 presentation 契约，例如 `AnnotationRenderItem`。
+- 对大数据变化发出语义明确的无参通知，View 再通过 ViewModel getter 拉取展示数据。
 - 小数据提示仍可直接传参，例如 `statusChanged(QString)` 和 `errorOccurred(QString)`。
 
 ## Model
@@ -31,27 +31,26 @@
 
 ## 通知绑定
 
-通知枚举统一定义在 `src/common/types/ViewModelChange.h`：
+每个 ViewModel 发布自身负责的明确通知：
 
 ```cpp
-enum class ViewModelChange {
-    CurrentImage,
-    Annotations,
-    CurrentLabel,
-    Project
-};
+ImageViewModel::currentImageChanged();
+AnnotationViewModel::annotationsChanged();
+LabelViewModel::labelsChanged();
+LabelViewModel::currentLabelChanged(LabelId labelId);
+ProjectViewModel::projectChanged();
 ```
 
 大数据不直接通过 signal 参数传递。当前规则是：
 
 ```text
-ViewModel emit changed(ViewModelChange)
-  -> Application 判断变化类型
+ViewModel 发出具体变化通知
   -> Application 从 ViewModel getter 拉取展示数据
   -> View 更新界面
 ```
 
-这样可以避免 `QImage`、`QVector<AnnotationRenderData>` 等对象频繁作为信号参数传递，也避免后续为每一种数据类型扩展不同的信号原型。
+这样既避免 `QImage`、`QVector<AnnotationRenderItem>` 等大对象频繁作为
+信号参数传递，也避免用一个泛化枚举混合多个 ViewModel 的事件语义。
 
 ## 当前闭环
 
@@ -62,10 +61,10 @@ MainWindow::openImage()
   -> importImageRequested(path)
   -> ImageViewModel::loadImage(path)
   -> ProjectModel 替换图片列表
-  -> ImageViewModel::changed(CurrentImage)
+  -> ImageViewModel::currentImageChanged()
   -> Application 拉取 ImageViewModel::currentQImage()
   -> ImageCanvas::setImage(image)
-  -> AnnotationViewModel::onImageViewModelChanged(CurrentImage)
+  -> AnnotationViewModel::onCurrentImageChanged()
 ```
 
 创建矩形标注：
@@ -76,7 +75,7 @@ ImageCanvas 鼠标拖拽
   -> annotationCreateRequested(imageRect)
   -> AnnotationViewModel::createAnnotation(imageRect)
   -> ProjectModel::addAnnotationToCurrentImage(...)
-  -> AnnotationViewModel::changed(Annotations)
+  -> AnnotationViewModel::annotationsChanged()
   -> Application 拉取 AnnotationViewModel::annotationItems()
   -> ImageCanvas::setAnnotations(renderData)
 ```
@@ -88,11 +87,11 @@ MainWindow 工具栏可编辑类别框
   -> labelNameChangeRequested(name)
   -> LabelViewModel::setCurrentLabelName(name)
   -> ProjectModel::renameDefaultLabel(name)
-  -> LabelViewModel::changed(CurrentLabel)
-  -> Application 拉取 LabelViewModel::currentLabelName()
-  -> MainWindow::setCurrentLabelName(name)
-  -> AnnotationViewModel::onLabelViewModelChanged(CurrentLabel)
-  -> AnnotationViewModel::changed(Annotations)
+  -> LabelViewModel::labelsChanged()
+  -> Application 拉取 LabelViewModel::labelItems()
+  -> MainWindow::setLabels(items)
+  -> AnnotationViewModel::onLabelsChanged()
+  -> AnnotationViewModel::annotationsChanged()
 ```
 
 项目保存/读取：
@@ -103,9 +102,9 @@ MainWindow 打开/保存项目菜单
   -> ProjectViewModel::openProject(path) / saveProject(path)
   -> JsonProjectRepository::load(path) / save(project, path)
   -> ProjectModel 替换或序列化项目数据
-  -> ProjectViewModel::changed(Project)
-  -> ImageViewModel::onProjectChanged(Project)
-  -> LabelViewModel::onProjectChanged(Project)
+  -> ProjectViewModel::projectChanged()
+  -> ImageViewModel::onProjectChanged()
+  -> LabelViewModel::onProjectChanged()
   -> AnnotationViewModel 响应图片和类别变化并重新发布标注
   -> Application 仅按绑定将各 ViewModel 的展示数据更新到 View
 ```

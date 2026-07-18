@@ -3,7 +3,6 @@
 #include <QObject>
 #include <QString>
 
-#include "common/types/ViewModelChange.h"
 #include "exporter/YoloExporter.h"
 #include "model/ProjectModel.h"
 #include "repository/JsonProjectRepository.h"
@@ -24,7 +23,7 @@ public slots:
     void exportYolo(const QString& outputDirectory);
 
 signals:
-    void changed(ViewModelChange change);
+    void projectChanged();
     void statusChanged(const QString& message);
     void errorOccurred(const QString& message);
 

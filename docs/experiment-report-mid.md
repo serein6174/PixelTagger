@@ -102,7 +102,7 @@ sequenceDiagram
     VM->>VM: 再次执行规范化、边界和最小尺寸校验
     VM->>M: addAnnotationToCurrentImage
     M-->>VM: 添加结果
-    VM-->>C: annotationsChanged(QVector<AnnotationViewData>)
+    VM-->>C: annotationsChanged() 后拉取 QVector<AnnotationRenderItem>
     C->>C: update / paintEvent
 ```
 

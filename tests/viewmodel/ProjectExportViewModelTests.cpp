@@ -30,6 +30,7 @@ class ProjectExportViewModelTests final : public QObject {
 private slots:
     void publishesSuccessAfterExport();
     void publishesExporterError();
+    void publishesProjectChangedAfterOpen();
 };
 
 void ProjectExportViewModelTests::publishesSuccessAfterExport()
@@ -81,6 +82,46 @@ void ProjectExportViewModelTests::publishesExporterError()
 
     QCOMPARE(statusSpy.count(), 0);
     QCOMPARE(errorSpy.count(), 1);
+}
+
+void ProjectExportViewModelTests::publishesProjectChangedAfterOpen()
+{
+    QTemporaryDir workspace(
+        QDir::currentPath() + QStringLiteral("/project-open-vm-test-XXXXXX")
+    );
+    QVERIFY(workspace.isValid());
+
+    const QString imagePath = workspace.filePath(QStringLiteral("image.jpg"));
+    QFile imageFile(imagePath);
+    QVERIFY(imageFile.open(QIODevice::WriteOnly));
+    imageFile.write("image");
+    imageFile.close();
+
+    ProjectModel sourceProject;
+    QVERIFY(sourceProject.replaceProjectData(
+        {makeViewModelExportImage(imagePath)},
+        {LabelModel{}},
+        0
+    ).isSuccess());
+
+    const QString projectPath = workspace.filePath(QStringLiteral("project.json"));
+    JsonProjectRepository repository;
+    QVERIFY(repository.save(sourceProject, projectPath).isSuccess());
+
+    ProjectModel targetProject;
+    YoloExporter exporter;
+    ProjectViewModel viewModel(targetProject, repository, exporter);
+    QSignalSpy projectChangedSpy(
+        &viewModel,
+        &ProjectViewModel::projectChanged
+    );
+    QSignalSpy errorSpy(&viewModel, &ProjectViewModel::errorOccurred);
+
+    viewModel.openProject(projectPath);
+
+    QCOMPARE(errorSpy.count(), 0);
+    QCOMPARE(projectChangedSpy.count(), 1);
+    QCOMPARE(targetProject.images().size(), 1);
 }
 
 QTEST_APPLESS_MAIN(ProjectExportViewModelTests)

@@ -9,6 +9,7 @@ class MultiLabelViewModelTests final : public QObject {
 
 private slots:
     void createsAnnotationsWithSelectedLabels();
+    void refreshesAnnotationPresentationWhenLabelsChange();
     void restoresLabelsAfterRenameFailure();
     void rejectsInvalidSelectionAndDeletion();
 };
@@ -27,7 +28,10 @@ void MultiLabelViewModelTests::createsAnnotationsWithSelectedLabels()
 
     QSignalSpy labelsChangedSpy(&labels, &LabelViewModel::labelsChanged);
     QSignalSpy currentLabelSpy(&labels, &LabelViewModel::currentLabelChanged);
-    QSignalSpy annotationsChangedSpy(&annotations, &AnnotationViewModel::changed);
+    QSignalSpy annotationsChangedSpy(
+        &annotations,
+        &AnnotationViewModel::annotationsChanged
+    );
 
     const QColor carColor(40, 120, 220);
     labels.addLabel(QStringLiteral("car"), carColor);
@@ -53,7 +57,7 @@ void MultiLabelViewModelTests::createsAnnotationsWithSelectedLabels()
     QCOMPARE(project.currentImage()->annotations.back().labelId, personId);
     QCOMPARE(annotationsChangedSpy.count(), 2);
 
-    const QVector<AnnotationRenderData> items = annotations.annotationItems();
+    const QVector<AnnotationRenderItem> items = annotations.annotationItems();
     QCOMPARE(items.size(), 2);
     QCOMPARE(items.at(0).labelName, QStringLiteral("car"));
     QCOMPARE(items.at(0).color, carColor);
@@ -64,6 +68,39 @@ void MultiLabelViewModelTests::createsAnnotationsWithSelectedLabels()
     QCOMPARE(annotations.currentLabelId(), carId);
     annotations.createAnnotation(QRectF(320, 240, 60, 60));
     QCOMPARE(project.currentImage()->annotations.back().labelId, carId);
+}
+
+void MultiLabelViewModelTests::refreshesAnnotationPresentationWhenLabelsChange()
+{
+    ProjectModel project;
+    project.replaceWithSingleImage(makeTestImage());
+
+    LabelViewModel labels(project);
+    AnnotationViewModel annotations(project);
+    QObject::connect(
+        &labels, &LabelViewModel::labelsChanged,
+        &annotations, &AnnotationViewModel::onLabelsChanged
+    );
+    QObject::connect(
+        &labels, &LabelViewModel::currentLabelChanged,
+        &annotations, &AnnotationViewModel::setCurrentLabelId
+    );
+
+    annotations.createAnnotation(QRectF(10, 20, 100, 80));
+    QSignalSpy annotationsChangedSpy(
+        &annotations,
+        &AnnotationViewModel::annotationsChanged
+    );
+
+    const QColor renamedColor(20, 200, 100);
+    labels.renameLabel(project.defaultLabel()->id, QStringLiteral("vehicle"));
+    labels.setLabelColor(project.defaultLabel()->id, renamedColor);
+
+    QCOMPARE(annotationsChangedSpy.count(), 2);
+    const QVector<AnnotationRenderItem> items = annotations.annotationItems();
+    QCOMPARE(items.size(), 1);
+    QCOMPARE(items.front().labelName, QStringLiteral("vehicle"));
+    QCOMPARE(items.front().color, renamedColor);
 }
 
 void MultiLabelViewModelTests::restoresLabelsAfterRenameFailure()

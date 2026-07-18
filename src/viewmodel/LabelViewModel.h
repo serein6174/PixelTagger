@@ -5,9 +5,8 @@
 #include <QString>
 #include <QVector>
 
-#include "common/presentation/LabelViewData.h"
+#include "common/presentation/LabelPresentationData.h"
 #include "common/types/EntityIds.h"
-#include "common/types/ViewModelChange.h"
 #include "model/ProjectModel.h"
 
 class LabelViewModel : public QObject {
@@ -16,7 +15,7 @@ class LabelViewModel : public QObject {
 public:
     explicit LabelViewModel(ProjectModel& project);
 
-    QVector<LabelViewData> labelItems() const;
+    QVector<LabelPresentationData> labelItems() const;
     LabelId currentLabelId() const noexcept;
     QString currentLabelName() const;
 
@@ -27,10 +26,9 @@ public slots:
     void setLabelColor(LabelId labelId, const QColor& color);
     void setCurrentLabel(LabelId labelId);
     void setCurrentLabelName(const QString& name);
-    void onProjectChanged(ViewModelChange change);
+    void onProjectChanged();
 
 signals:
-    void changed(ViewModelChange change);
     void labelsChanged();
     void currentLabelChanged(LabelId labelId);
     void errorOccurred(const QString& message);

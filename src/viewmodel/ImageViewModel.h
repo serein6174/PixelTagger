@@ -5,7 +5,6 @@
 #include <QVector>
 
 #include "common/types/Result.h"
-#include "common/types/ViewModelChange.h"
 #include "model/ImageModel.h"
 #include "model/ProjectModel.h"
 
@@ -19,13 +18,13 @@ public:
     void loadFolder(const QString& folderPath);
     void nextImage();
     void previousImage();
-    void onProjectChanged(ViewModelChange change);
+    void onProjectChanged();
 
     ImageModel currentImage() const;
     const QImage& currentQImage() const noexcept;
 
 signals:
-    void changed(ViewModelChange change);
+    void currentImageChanged();
     void statusChanged(const QString& message);
     void errorOccurred(const QString& message);
 

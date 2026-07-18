@@ -422,7 +422,7 @@ void MainWindow::setCurrentLabelName(const QString& name)
     labelComboBox_->setCurrentText(name);
 }
 
-void MainWindow::setLabels(const QVector<LabelViewData>& labels)
+void MainWindow::setLabels(const QVector<LabelPresentationData>& labels)
 {
     const QSignalBlocker blocker(labelComboBox_);
 
@@ -430,7 +430,7 @@ void MainWindow::setLabels(const QVector<LabelViewData>& labels)
     int currentIndex = -1;
 
     for (int index = 0; index < labels.size(); ++index) {
-        const LabelViewData& label = labels.at(index);
+        const LabelPresentationData& label = labels.at(index);
         labelComboBox_->addItem(makeColorIcon(label.color), label.name, label.id);
         labelComboBox_->setItemData(index, label.color, Qt::UserRole + 1);
         if (label.inUse) {

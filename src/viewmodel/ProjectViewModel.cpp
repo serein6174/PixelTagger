@@ -48,6 +48,6 @@ void ProjectViewModel::openProject(const QString& path)
     }
 
     project_ = result.takeValue();
-    emit changed(ViewModelChange::Project);
+    emit projectChanged();
     emit statusChanged(QStringLiteral("项目已打开：%1").arg(path));
 }

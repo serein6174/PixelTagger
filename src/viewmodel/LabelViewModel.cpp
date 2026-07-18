@@ -6,12 +6,12 @@ LabelViewModel::LabelViewModel(ProjectModel& project)
     resetCurrentLabel();
 }
 
-QVector<LabelViewData> LabelViewModel::labelItems() const
+QVector<LabelPresentationData> LabelViewModel::labelItems() const
 {
-    QVector<LabelViewData> items;
+    QVector<LabelPresentationData> items;
     items.reserve(project_.labels().size());
     for (const LabelModel& label : project_.labels()) {
-        LabelViewData item;
+        LabelPresentationData item;
         item.id = label.id;
         item.name = label.name;
         item.color = label.color;
@@ -74,7 +74,6 @@ void LabelViewModel::renameLabel(LabelId labelId, const QString& name)
     }
 
     emit labelsChanged();
-    emit changed(ViewModelChange::CurrentLabel);
 }
 
 void LabelViewModel::setLabelColor(LabelId labelId, const QColor& color)
@@ -86,7 +85,6 @@ void LabelViewModel::setLabelColor(LabelId labelId, const QColor& color)
     }
 
     emit labelsChanged();
-    emit changed(ViewModelChange::CurrentLabel);
 }
 
 void LabelViewModel::setCurrentLabel(LabelId labelId)
@@ -109,13 +107,11 @@ void LabelViewModel::setCurrentLabelName(const QString& name)
     renameLabel(currentLabelId_, name);
 }
 
-void LabelViewModel::onProjectChanged(ViewModelChange change)
+void LabelViewModel::onProjectChanged()
 {
-    if (change == ViewModelChange::Project) {
-        resetCurrentLabel();
-        emit labelsChanged();
-        publishCurrentLabel();
-    }
+    resetCurrentLabel();
+    emit labelsChanged();
+    publishCurrentLabel();
 }
 
 void LabelViewModel::resetCurrentLabel()
@@ -127,5 +123,4 @@ void LabelViewModel::resetCurrentLabel()
 void LabelViewModel::publishCurrentLabel()
 {
     emit currentLabelChanged(currentLabelId_);
-    emit changed(ViewModelChange::CurrentLabel);
 }

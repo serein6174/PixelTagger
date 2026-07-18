@@ -97,7 +97,7 @@ QObject::connect(
 
 ## 选择状态同步
 
-`AnnotationViewModel::changed(ViewModelChange::Annotations)` 已经会使
+`AnnotationViewModel::annotationsChanged()` 已经会使
 Application 重新拉取 `annotationItems()`，Canvas 可以由其中的
 `selected` 字段绘制高亮。
 
@@ -171,7 +171,7 @@ src/repository/
 Canvas 已持有：
 
 ```cpp
-QVector<AnnotationRenderData> annotations_;
+QVector<AnnotationRenderItem> annotations_;
 ```
 
 鼠标点击时：
@@ -240,7 +240,7 @@ public slots:
 
 ## 选中状态显示
 
-`AnnotationRenderData::selected` 已经存在。
+`AnnotationRenderItem::selected` 已经存在。
 
 Canvas 绘制时应继续使用该字段，例如：
 
@@ -265,7 +265,7 @@ Canvas 中修改真实标注类别。
 
 ## View 层不能做的事情
 
-- 直接修改 `AnnotationRenderData` 并把它当成真实数据；
+- 直接修改 `AnnotationRenderItem` 并把它当成真实数据；
 - 直接修改 `AnnotationModel::labelId`；
 - include 或调用 `AnnotationViewModel`；
 - 根据类别名称查找类别；

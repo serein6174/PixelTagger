@@ -100,19 +100,15 @@ processViewModel_(imageProcessor_)
 
 ## 当前图片同步
 
-`ImageViewModel` 发布 `CurrentImage` 后，应将原图交给
+`ImageViewModel` 发布 `currentImageChanged()` 后，应将原图交给
 `ProcessViewModel`：
 
 ```cpp
 QObject::connect(
     &imageViewModel_,
-    &ImageViewModel::changed,
+    &ImageViewModel::currentImageChanged,
     &mainWindow_,
-    [this](ViewModelChange change) {
-        if (change != ViewModelChange::CurrentImage) {
-            return;
-        }
-
+    [this]() {
         processViewModel_.setSourceImage(
             imageViewModel_.currentQImage()
         );
@@ -120,7 +116,7 @@ QObject::connect(
 );
 ```
 
-也可以放入已有的 `CurrentImage` 绑定 lambda，但只能做状态转交，不能
+也可以放入已有的图片变化绑定 lambda，但只能做状态转交，不能
 在 Application 中执行 OpenCV 算法。
 
 `setSourceImage()` 会自动清除上一张图片的处理预览。

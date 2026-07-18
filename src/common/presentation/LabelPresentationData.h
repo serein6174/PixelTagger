@@ -5,7 +5,7 @@
 
 #include "common/types/EntityIds.h"
 
-struct LabelViewData final {
+struct LabelPresentationData final {
     LabelId id = -1;
     QString name;
     QColor color;

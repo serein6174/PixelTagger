@@ -6,7 +6,7 @@
 #include <QWidget>
 
 #include "view/canvas/CoordinateMapper.h"
-#include "common/presentation/AnnotationRenderData.h"
+#include "common/presentation/AnnotationRenderItem.h"
 
 class ImageCanvas : public QWidget {
     Q_OBJECT
@@ -19,7 +19,7 @@ public:
 
 public slots:
     void setImage(const QImage& image);
-    void setAnnotations(const QVector<AnnotationRenderData>& annotations);
+    void setAnnotations(const QVector<AnnotationRenderItem>& annotations);
     void zoomIn();
     void zoomOut();
     void resetView();
@@ -53,25 +53,25 @@ private:
     void applyZoom(double factor, const QPointF& anchor);
     void clampPanOffset();
     AnnotationId annotationAt(const QPointF& widgetPoint) const;
-    const AnnotationRenderData* annotationById(AnnotationId annotationId) const;
-    const AnnotationRenderData* selectedAnnotation() const;
+    const AnnotationRenderItem* annotationById(AnnotationId annotationId) const;
+    const AnnotationRenderItem* selectedAnnotation() const;
     AnnotationEditMode resizeHandleAt(
         const QPointF& widgetPoint,
-        const AnnotationRenderData& annotation
+        const AnnotationRenderItem& annotation
     ) const;
     void beginAnnotationEdit(
-        const AnnotationRenderData& annotation,
+        const AnnotationRenderItem& annotation,
         AnnotationEditMode mode,
         const QPointF& imagePoint
     );
     QRectF annotationEditRect(const QPointF& imagePoint) const;
-    QRectF visibleAnnotationRect(const AnnotationRenderData& annotation) const;
+    QRectF visibleAnnotationRect(const AnnotationRenderItem& annotation) const;
     void drawAnnotations(QPainter& painter);
     void drawSelectionHandles(QPainter& painter, const QRectF& widgetRect);
     void drawPreview(QPainter& painter);
 
     QImage image_;
-    QVector<AnnotationRenderData> annotations_;
+    QVector<AnnotationRenderItem> annotations_;
     CoordinateMapper mapper_;
 
     double zoomFactor_ = 1.0;

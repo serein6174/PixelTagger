@@ -45,15 +45,13 @@ void Application::bindImageFlow()
     QObject::connect(&mainWindow_, &MainWindow::nextImageRequested,
                      &imageViewModel_, &ImageViewModel::nextImage);
 
-    QObject::connect(&imageViewModel_, &ImageViewModel::changed,
-                     &mainWindow_, [this](ViewModelChange change) {
-                         if (change == ViewModelChange::CurrentImage) {
-                             processViewModel_.setSourceImage(
-                                 imageViewModel_.currentQImage());
-                         }
+    QObject::connect(&imageViewModel_, &ImageViewModel::currentImageChanged,
+                     &mainWindow_, [this]() {
+                         processViewModel_.setSourceImage(
+                             imageViewModel_.currentQImage());
                      });
-    QObject::connect(&imageViewModel_, &ImageViewModel::changed,
-                     &annotationViewModel_, &AnnotationViewModel::onImageViewModelChanged);
+    QObject::connect(&imageViewModel_, &ImageViewModel::currentImageChanged,
+                     &annotationViewModel_, &AnnotationViewModel::onCurrentImageChanged);
 }
 
 void Application::bindAnnotationFlow()
@@ -73,11 +71,9 @@ void Application::bindAnnotationFlow()
     QObject::connect(&canvas, &ImageCanvas::selectedAnnotationRectChangeRequested,
                      &annotationViewModel_, &AnnotationViewModel::updateSelectedAnnotationRect);
 
-    QObject::connect(&annotationViewModel_, &AnnotationViewModel::changed,
-                     &mainWindow_, [this, &canvas](ViewModelChange change) {
-                         if (change == ViewModelChange::Annotations) {
-                             canvas.setAnnotations(annotationViewModel_.annotationItems());
-                         }
+    QObject::connect(&annotationViewModel_, &AnnotationViewModel::annotationsChanged,
+                     &mainWindow_, [this, &canvas]() {
+                         canvas.setAnnotations(annotationViewModel_.annotationItems());
                      });
     QObject::connect(&annotationViewModel_, &AnnotationViewModel::selectionChanged,
                      &mainWindow_, &MainWindow::setAnnotationEditEnabled);
@@ -99,8 +95,8 @@ void Application::bindLabelFlow()
                      &mainWindow_, [this]() { syncLabelsToView(); });
     QObject::connect(&labelViewModel_, &LabelViewModel::currentLabelChanged,
                      &annotationViewModel_, &AnnotationViewModel::setCurrentLabelId);
-    QObject::connect(&labelViewModel_, &LabelViewModel::changed,
-                     &annotationViewModel_, &AnnotationViewModel::onLabelViewModelChanged);
+    QObject::connect(&labelViewModel_, &LabelViewModel::labelsChanged,
+                     &annotationViewModel_, &AnnotationViewModel::onLabelsChanged);
 }
 
 void Application::bindProcessFlow()
@@ -145,9 +141,9 @@ void Application::bindProjectFlow()
     QObject::connect(&mainWindow_, &MainWindow::exportYoloRequested,
                      &projectViewModel_, &ProjectViewModel::exportYolo);
 
-    QObject::connect(&projectViewModel_, &ProjectViewModel::changed,
+    QObject::connect(&projectViewModel_, &ProjectViewModel::projectChanged,
                      &imageViewModel_, &ImageViewModel::onProjectChanged);
-    QObject::connect(&projectViewModel_, &ProjectViewModel::changed,
+    QObject::connect(&projectViewModel_, &ProjectViewModel::projectChanged,
                      &labelViewModel_, &LabelViewModel::onProjectChanged);
 }
 

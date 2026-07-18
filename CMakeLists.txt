@@ -20,9 +20,8 @@ add_executable(AnnotaVision
 
     src/common/types/EntityIds.h
     src/common/types/Result.h
-    src/common/types/ViewModelChange.h
-    src/common/presentation/AnnotationRenderData.h
-    src/common/presentation/LabelViewData.h
+    src/common/presentation/AnnotationRenderItem.h
+    src/common/presentation/LabelPresentationData.h
 
     src/model/AnnotationModel.h
     src/model/ImageModel.h
@@ -101,9 +100,8 @@ if(BUILD_TESTING)
 
             src/common/types/EntityIds.h
             src/common/types/Result.h
-            src/common/types/ViewModelChange.h
-            src/common/presentation/AnnotationRenderData.h
-            src/common/presentation/LabelViewData.h
+            src/common/presentation/AnnotationRenderItem.h
+            src/common/presentation/LabelPresentationData.h
 
             src/model/AnnotationModel.h
             src/model/ImageModel.h
@@ -223,7 +221,6 @@ if(BUILD_TESTING)
 
             src/common/types/EntityIds.h
             src/common/types/Result.h
-            src/common/types/ViewModelChange.h
 
             src/model/AnnotationModel.h
             src/model/ImageModel.h

@@ -130,11 +130,8 @@ void AnnotationViewModel::setSelectedAnnotationLabel(LabelId labelId)
     publishAnnotations();
 }
 
-void AnnotationViewModel::onImageViewModelChanged(ViewModelChange change)
+void AnnotationViewModel::onCurrentImageChanged()
 {
-    if (change != ViewModelChange::CurrentImage) {
-        return;
-    }
     const bool hadSelection = selectedAnnotationId_.has_value();
     selectedAnnotationId_.reset();
     if (hadSelection) {
@@ -162,11 +159,8 @@ void AnnotationViewModel::setCurrentLabelId(LabelId labelId)
     currentLabelId_ = labelId;
 }
 
-void AnnotationViewModel::onLabelViewModelChanged(ViewModelChange change)
+void AnnotationViewModel::onLabelsChanged()
 {
-    if (change != ViewModelChange::CurrentLabel) {
-        return;
-    }
     if (!project_.findLabel(currentLabelId_)) {
         resetCurrentLabel();
     }
@@ -175,12 +169,12 @@ void AnnotationViewModel::onLabelViewModelChanged(ViewModelChange change)
 
 void AnnotationViewModel::publishAnnotations()
 {
-    emit changed(ViewModelChange::Annotations);
+    emit annotationsChanged();
 }
 
-QVector<AnnotationRenderData> AnnotationViewModel::annotationItems() const
+QVector<AnnotationRenderItem> AnnotationViewModel::annotationItems() const
 {
-    QVector<AnnotationRenderData> items;
+    QVector<AnnotationRenderItem> items;
 
     const ImageModel* image = project_.currentImage();
     if (!image) {
@@ -195,7 +189,7 @@ QVector<AnnotationRenderData> AnnotationViewModel::annotationItems() const
             continue;
         }
 
-        AnnotationRenderData item;
+        AnnotationRenderItem item;
         item.id = annotation.id;
         item.imageRect = annotation.imageRect;
         item.labelName = label->name;

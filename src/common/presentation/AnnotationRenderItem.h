@@ -6,7 +6,7 @@
 
 #include "common/types/EntityIds.h"
 
-struct AnnotationRenderData {
+struct AnnotationRenderItem final {
     AnnotationId id = -1;
     QRectF imageRect;
     QString labelName;
