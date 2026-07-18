@@ -1,0 +1,75 @@
+{
+    "current_image_index": 0,
+    "format": "PixelTaggerProject",
+    "images": [
+        {
+            "annotations": [
+                {
+                    "id": 1,
+                    "label_id": 0,
+                    "rect": {
+                        "height": 263.5658914728684,
+                        "width": 408.52713178294573,
+                        "x": 164.15116279069767,
+                        "y": 262.7906976744186
+                    }
+                },
+                {
+                    "id": 2,
+                    "label_id": 1,
+                    "rect": {
+                        "height": 147.28682170542638,
+                        "width": 193.02325581395348,
+                        "x": 229.2674418604651,
+                        "y": 166.66666666666666
+                    }
+                }
+            ],
+            "file_name": "1.png",
+            "height": 1000,
+            "id": 2,
+            "path": "***REDACTED***/1.png",
+            "width": 719
+        },
+        {
+            "annotations": [
+            ],
+            "file_name": "1111.png",
+            "height": 1707,
+            "id": 3,
+            "path": "***REDACTED***/1111.png",
+            "width": 1280
+        },
+        {
+            "annotations": [
+            ],
+            "file_name": "Figure_1.png",
+            "height": 756,
+            "id": 4,
+            "path": "***REDACTED***/Figure_1.png",
+            "width": 1200
+        },
+        {
+            "annotations": [
+            ],
+            "file_name": "图片1.png",
+            "height": 591,
+            "id": 5,
+            "path": "***REDACTED***/图片1.png",
+            "width": 564
+        }
+    ],
+    "labels": [
+        {
+            "color": "#dc4646",
+            "id": 0,
+            "name": "object"
+        },
+        {
+            "color": "#55ff00",
+            "id": 1,
+            "name": "new"
+        }
+    ],
+    "version": 1
+}
