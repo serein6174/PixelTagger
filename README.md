@@ -73,16 +73,36 @@ MainWindow 发出打开或保存项目请求
 - OpenCV 4.12.0；
 - vcpkg，`x64-windows` triplet。
 
+### 依赖安装
+
+Qt 可通过 Qt Online Installer 安装。安装时选择 Qt 6.x 的 `MSVC 2022 64-bit`
+组件，使本机存在类似 `<QtRoot>/<QtVersion>/msvc2022_64` 的 Qt kit 目录。
+
+OpenCV 通过 vcpkg 安装，不需要把 OpenCV 源码或库文件直接放入本项目：
+
+```powershell
+git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+C:\vcpkg\bootstrap-vcpkg.bat
+C:\vcpkg\vcpkg.exe install opencv4:x64-windows
+```
+
+本项目的 `CMakeLists.txt` 只链接 OpenCV `core` 和 `imgproc` 组件。使用 vcpkg
+安装后由 CMake 自动查找对应库。
+
 请在本机设置环境变量：
 
 - `VCPKG_ROOT`：指向 vcpkg 安装目录。
 - `QT_DIR` 或 `CMAKE_PREFIX_PATH`：指向 Qt kit 安装前缀，例如 `<QtRoot>/<QtVersion>/msvc2022_64`。
 
-如果 Qt 不在 CMake 默认搜索路径中，配置时需要补充 `CMAKE_PREFIX_PATH`：
+### 构建与运行
+
+如果 Qt 不在 CMake 默认搜索路径中，配置时需要补充 `CMAKE_PREFIX_PATH`。Windows
+主开发环境建议使用仓库中的 `vs2022-x64` preset：
 
 ```powershell
-cmake --preset default -DCMAKE_PREFIX_PATH=<QtPrefix>
-cmake --build --preset default --config Debug
+cmake --preset vs2022-x64 -DCMAKE_PREFIX_PATH=<QtPrefix>
+cmake --build --preset vs2022-x64 --config Debug
+ctest --test-dir build/vs2022-x64 -C Debug --output-on-failure
 ```
 
 其中 `<QtPrefix>` 是包含 `lib/cmake/Qt6/Qt6Config.cmake` 的 Qt 安装前缀。
@@ -91,13 +111,6 @@ cmake --build --preset default --config Debug
 
 ```powershell
 windeployqt <path-to-build-output>/Debug/AnnotaVision.exe
-```
-
-基础图像处理只需要 OpenCV Core 和 Imgproc。建议安装最小功能版本，
-避免引入 DNN、DirectML、FlatBuffers 等当前项目不使用的依赖：
-
-```powershell
-& "$env:VCPKG_ROOT\vcpkg.exe" install "opencv4[core]:x64-windows"
 ```
 
 安装完成后确认版本：
@@ -114,4 +127,3 @@ opencv4:x64-windows  4.12.0
 
 安装命令需要联网下载依赖。CMake preset 已通过 `VCPKG_ROOT` 使用
 vcpkg toolchain。
-
