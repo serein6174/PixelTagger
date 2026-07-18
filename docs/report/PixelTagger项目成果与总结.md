@@ -330,7 +330,7 @@ ctest --test-dir build/vs2022-x64 -C Debug --output-on-failure
 | --------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ---------- |
 | 张程龄 | Model/ViewModel层负责 | ProjectModel、Annotation/Label/Process/Project ViewModel、Processor、Exporter、自动测试 | 多类别与标注编辑业务、OpenCV 图像处理、YOLO 导出、分类测试及交接文档 | App 层和 View 层成员 |
 | 【成员2】 | 【待填写】     | 【待填写】                                                                                                                                                       | 【待填写】                              | 【待填写】 |
-| 倪泠      | 界面与集成协作 | 主窗口侧功能入口和交互控件接入，包括多类别工具栏、图像处理菜单/面板入口、YOLO 导出入口、标注类别编辑入口和快捷键调整；配合完成相关功能在不同系统界面层的集成验证 | ViewModel / Model、Application 相关成员 |
+| 倪泠 | View 层界面接入与运行验证负责 |  View 层的 `MainWindow` 和`ImageCanvas`  | 主窗口菜单、工具栏、按钮和快捷键等用户操作入口；验证界面入口能正确触发 ViewModel / Application 绑定后的业务流程 | ViewModel / Model、Application 相关成员 |
 
 同时，使用了类别编辑、图像处理和 YOLO 的交接文档，便于团队成员协作。
 
