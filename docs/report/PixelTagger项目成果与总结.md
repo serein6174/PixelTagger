@@ -325,18 +325,17 @@ ctest --test-dir build/vs2022-x64 -C Debug --output-on-failure
 ## 7. 团队协作与项目管理
 
 ### 7.1 团队分工
-<!-- TODO -->
 | 成员      | 主要角色       | 负责模块                                                                                                                                                         | 主要产出                                | 协作对象   |
 | --------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ---------- |
 | 张程龄 | Model/ViewModel层负责 | ProjectModel、Annotation/Label/Process/Project ViewModel、Processor、Exporter、自动测试 | 多类别与标注编辑业务、OpenCV 图像处理、YOLO 导出、分类测试及交接文档 | App 层和 View 层成员 |
-| 【成员2】 | 【待填写】     | 【待填写】                                                                                                                                                       | 【待填写】                              | 【待填写】 |
-| 倪泠 | View 层界面接入与运行验证负责 |  View 层的 `MainWindow` 和`ImageCanvas`  | 主窗口菜单、工具栏、按钮和快捷键等用户操作入口；验证界面入口能正确触发 ViewModel / Application 绑定后的业务流程 | ViewModel / Model、Application 相关成员 |
+| 朱珂晗 | Application 集成与测试文档负责 | `Application` 装配层、`CMakeLists.txt` 构建配置、View 交互接入与测试 | App 层对象装配和信号槽绑定完善；删除标注入口和画布交互功能恢复；界面交互测试补充；UTF-8 构建配置与报告截图、材料整理 | Model/ViewModel 层和 View 层成员 |
+| 倪泠 | View 层界面接入与运行验证负责 |  View 层的 `MainWindow` 和`ImageCanvas`  | 主窗口菜单、工具栏、按钮和快捷键等用户操作入口；验证界面入口能正确触发 ViewModel / Application 绑定后的业务流程 | ViewModel / Model、Application 成员 |
 
 同时，使用了类别编辑、图像处理和 YOLO 的交接文档，便于团队成员协作。
 
 ### 7.3 模块集成方式
 
-团队可围绕稳定接口并行：Model 约定实体 ID、原图矩形与 dirty 语义；ViewModel 暴露业务方法和强类型信号；`Application` 统一连接；View 只处理绘制和输入；CMake 负责把新增源文件、库和测试接入目标。实际由谁负责哪一层、合并中发生过哪些冲突仍需成员填写，不能从提交主题机械推断完整分工。
+团队可围绕稳定接口并行：Model 约定实体 ID、原图矩形与 dirty 语义；ViewModel 暴露业务方法和强类型信号；`Application` 统一连接；View 只处理绘制和输入；CMake 负责把新增源文件、库和测试接入目标。成员在各自负责层完成开发后，通过 `Application` 绑定、构建配置和界面验收把功能串联为完整流程。
 
 ## 8. 智能体使用说明
 
