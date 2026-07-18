@@ -2,8 +2,12 @@ build/
 .vs/
 out/
 
-# Local assistant context. Do not publish machine-local instructions or traces.
-.agents/
+# Local assistant context. Publish only the shared PixelTagger MVVM skill.
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/enforce-pixeltagger-mvvm/
+!.agents/skills/enforce-pixeltagger-mvvm/**
 .codex/
 
 # Local CMake/IDE settings.

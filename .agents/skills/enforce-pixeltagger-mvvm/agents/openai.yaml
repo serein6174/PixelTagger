@@ -1,0 +1,4 @@
+interface:
+  display_name: "PixelTagger Strict MVVM"
+  short_description: "Enforce PixelTagger strict MVVM architecture rules"
+  default_prompt: "Use $enforce-pixeltagger-mvvm to implement this PixelTagger change without violating strict MVVM boundaries."
