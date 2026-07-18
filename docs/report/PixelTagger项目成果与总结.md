@@ -212,7 +212,7 @@ sequenceDiagram
 
 ### 5.5 JSON 项目数据
 
-T08 的保存结果以 JSON 文件而非界面截图保存。为控制篇幅，正文仅摘录格式标识、类别和一条标注；[脱敏后的完整项目 JSON](assets/textPicture.json) 保留了 4 张图片、2 个类别及当前图片中的 2 条矩形标注。
+T08 的保存结果以 JSON 文件而非界面截图保存。为控制篇幅，正文仅摘录格式标识、类别和一条标注；脱敏后的完整项目 JSON 文件 `assets/textPicture.json` 保留了 4 张图片、2 个类别及当前图片中的 2 条矩形标注。
 
 ```json
 {
@@ -334,12 +334,12 @@ ctest --test-dir build/wsl --output-on-failure
 
 | 文档或规则文件                                                                                                                      | 本项目采用的约束与用途                                                                                                                                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`.agents/skills/enforce-pixeltagger-mvvm/SKILL.md`](../../.agents/skills/enforce-pixeltagger-mvvm/SKILL.md)                         | 定义团队 Skill 的触发范围和执行步骤。处理 PixelTagger 架构、分层、信号绑定或功能模块时，智能体需要先核对当前指导与代码，再判断职责归属、依赖方向和状态所有权，并在修改后检查跨层依赖、测试及构建结果。                                                          |
-| [`.agents/skills/enforce-pixeltagger-mvvm/references/mvvm-architecture-guideline.md`](../../.agents/skills/enforce-pixeltagger-mvvm/references/mvvm-architecture-guideline.md) | 保存团队共享的完整 MVVM 架构指导，规定 `ProjectModel` 是业务数据的唯一真实来源，`Application` 只负责对象装配和绑定，View 不访问 Model，ViewModel 通过受控接口修改 Model，并将 Repository、Processor、Exporter 的职责与业务层分离。                    |
-| [`docs/mvvm.md`](../mvvm.md)                                                                                                        | 结合当前实现说明信号流和展示数据流。较大的标注、类别和图像数据由专用无参 signal 通知变化，再由 `Application` 调用 ViewModel getter 拉取；布尔值、实体 ID 和状态消息等小型数据可直接作为 signal 参数传递。                                                     |
-| [`docs/annotation-category-edit-team-handoff.md`](../annotation-category-edit-team-handoff.md)                                      | 约束已有标注改类别的跨层接口，规定 Canvas 在 View 层完成命中测试和坐标转换，Model/ViewModel 只接收原图坐标和稳定实体 ID，并给出 App、View 接入及自动测试要求。                                                                                                  |
-| [`docs/image-processing-team-handoff..md`](../image-processing-team-handoff..md)                                                    | 规定处理结果采用非破坏性预览，OpenCV 算法位于 Processor，处理参数和预览状态由 `ProcessViewModel` 管理，View 只表达用户操作，`Application` 不执行算法。                                                                                                        |
-| [`docs/yolo-export-team-handoff.md`](../yolo-export-team-handoff.md)                                                                | 规定 View 只提供导出目录，YOLO 坐标转换、类别编号和文件生成由 Exporter 负责，`ProjectViewModel` 组织请求与结果通知，`Application` 不修改导出数据。                                                                                                          |
+| `.agents/skills/enforce-pixeltagger-mvvm/SKILL.md`                                                                                  | 定义团队 Skill 的触发范围和执行步骤。处理 PixelTagger 架构、分层、信号绑定或功能模块时，智能体需要先核对当前指导与代码，再判断职责归属、依赖方向和状态所有权，并在修改后检查跨层依赖、测试及构建结果。                                                          |
+| `.agents/skills/enforce-pixeltagger-mvvm/references/mvvm-architecture-guideline.md`                                                  | 保存团队共享的完整 MVVM 架构指导，规定 `ProjectModel` 是业务数据的唯一真实来源，`Application` 只负责对象装配和绑定，View 不访问 Model，ViewModel 通过受控接口修改 Model，并将 Repository、Processor、Exporter 的职责与业务层分离。                    |
+| `docs/mvvm.md`                                                                                                                      | 结合当前实现说明信号流和展示数据流。较大的标注、类别和图像数据由专用无参 signal 通知变化，再由 `Application` 调用 ViewModel getter 拉取；布尔值、实体 ID 和状态消息等小型数据可直接作为 signal 参数传递。                                                     |
+| `docs/annotation-category-edit-team-handoff.md`                                                                                     | 约束已有标注改类别的跨层接口，规定 Canvas 在 View 层完成命中测试和坐标转换，Model/ViewModel 只接收原图坐标和稳定实体 ID，并给出 App、View 接入及自动测试要求。                                                                                                  |
+| `docs/image-processing-team-handoff..md`                                                                                            | 规定处理结果采用非破坏性预览，OpenCV 算法位于 Processor，处理参数和预览状态由 `ProcessViewModel` 管理，View 只表达用户操作，`Application` 不执行算法。                                                                                                        |
+| `docs/yolo-export-team-handoff.md`                                                                                                  | 规定 View 只提供导出目录，YOLO 坐标转换、类别编号和文件生成由 Exporter 负责，`ProjectViewModel` 组织请求与结果通知，`Application` 不修改导出数据。                                                                                                          |
 
 团队使用智能体处理代码时，以团队 Skill 和其中的完整架构指导作为通用边界，再根据具体功能读取相应 handoff；`docs/experiment-report-mid.md` 只用于了解 Command 方案调整、导入职责归属等历史决策，不作为当前强制规则。若代码需求与既有规则发生冲突，应由成员先确认架构是否需要调整，并同步更新团队 Skill 和指导文档，不能仅为减少局部修改而绕过分层。
 
