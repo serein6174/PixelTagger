@@ -1,54 +1,75 @@
 #pragma once
 
+#include <QRectF>
 #include <QVector>
 
+#include "common/types/Result.h"
 #include "model/ImageModel.h"
+#include "model/LabelModel.h"
 
-class ProjectModel {
+class ProjectModel final {
 public:
-    QVector<ImageModel> images;
-    int currentIndex = -1;
+    ProjectModel();
 
-    bool hasCurrentImage() const
-    {
-        return currentIndex >= 0 && currentIndex < images.size();
-    }
+    bool hasCurrentImage() const noexcept;
+    const ImageModel* currentImage() const noexcept;
+    ImageModel currentImageValue() const;
+    int currentImagePosition() const noexcept;
+    int imageCount() const noexcept;
+    int currentImageIndex() const noexcept;
+    const QVector<ImageModel>& images() const noexcept;
+    const QVector<LabelModel>& labels() const noexcept;
 
-    ImageModel currentImage() const
-    {
-        return hasCurrentImage() ? images[currentIndex] : ImageModel{};
-    }
+    void replaceWithSingleImage(ImageModel image);
+    void replaceImages(QVector<ImageModel> images);
+    Result<void> replaceProjectData(
+        QVector<ImageModel> images,
+        QVector<LabelModel> labels,
+        int currentIndex
+    );
+    bool moveNextImage();
+    bool movePreviousImage();
 
-    void setSingleImage(const ImageModel& image)
-    {
-        images.clear();
-        images.push_back(image);
-        currentIndex = 0;
-    }
+    bool addAnnotationToCurrentImage(const QRectF& imageRect, LabelId labelId);
+    const AnnotationModel* findAnnotationInCurrentImage(
+        AnnotationId annotationId
+    ) const noexcept;
+    Result<void> removeAnnotationFromCurrentImage(AnnotationId annotationId);
+    Result<void> updateAnnotationRect(
+        AnnotationId annotationId,
+        const QRectF& imageRect
+    );
+    Result<void> changeAnnotationLabel(
+        AnnotationId annotationId,
+        LabelId labelId
+    );
 
-    void setImages(const QVector<ImageModel>& imageList)
-    {
-        images = imageList;
-        currentIndex = images.isEmpty() ? -1 : 0;
-    }
+    const LabelModel* defaultLabel() const noexcept;
+    const LabelModel* findLabel(LabelId labelId) const noexcept;
+    Result<LabelId> addLabel(const QString& name, const QColor& color);
+    Result<void> removeLabel(LabelId labelId);
+    Result<void> renameLabel(LabelId labelId, const QString& name);
+    Result<void> setLabelColor(LabelId labelId, const QColor& color);
+    bool isLabelInUse(LabelId labelId) const noexcept;
+    bool renameDefaultLabel(const QString& name);
 
-    bool moveNext()
-    {
-        if (currentIndex + 1 >= images.size()) {
-            return false;
-        }
+    bool isModified() const noexcept;
+    void markSaved() noexcept;
 
-        ++currentIndex;
-        return true;
-    }
+private:
+    AnnotationModel* findMutableAnnotationInCurrentImage(
+        AnnotationId annotationId
+    ) noexcept;
+    Result<void> validateAnnotationRect(const QRectF& imageRect) const;
+    void markCurrentImageModified();
+    void assignImageIds(QVector<ImageModel>& images);
+    void refreshNextIds();
 
-    bool movePrevious()
-    {
-        if (currentIndex <= 0) {
-            return false;
-        }
-
-        --currentIndex;
-        return true;
-    }
+    QVector<ImageModel> images_;
+    QVector<LabelModel> labels_;
+    int currentIndex_ = -1;
+    bool modified_ = false;
+    ImageId nextImageId_ = 1;
+    AnnotationId nextAnnotationId_ = 1;
+    LabelId nextLabelId_ = 1;
 };
